@@ -11,6 +11,7 @@ use Magento\Framework\Filesystem\Directory\WriteFactory as DirectoryWriteFactory
 use Magento\Framework\Filesystem\DriverPool;
 use Magento\Framework\Filesystem\File\ReadFactory;
 use Magento\Framework\Filesystem\File\WriteFactory as FileWriteFactory;
+use Magento\Framework\Filesystem\Io\File;
 use Magento\Framework\Module\Dir;
 use Magento\Framework\Xml\Generator;
 use Magento\Framework\Xml\Parser;
@@ -41,6 +42,9 @@ abstract class AbstractModuleCommand extends Command
      */
     const MESSAGE_DIRECTORY_CREATED = 'Directory %1 is successfully created!';
     const MESSAGE_FILE_CREATED = 'File %1 is successfully created!';
+    const MESSAGE_FILE_EXIST = 'File %1 already exist!';
+    const MESSAGE_MODULE_NOT_EXIST = 'Module doesn\'t exist in code directory!';
+    const MESSAGE_MODULE_MISSING = 'Module name is missing!';
 
     /**
      * XML constants
@@ -88,10 +92,16 @@ abstract class AbstractModuleCommand extends Command
      * @var Files
      */
     protected $filesUtility;
+
     /**
      * @var Parser
      */
     protected $xmlParser;
+
+    /**
+     * @var File
+     */
+    protected $file;
 
     /**
      * CreateModuleCommand constructor.
@@ -104,6 +114,7 @@ abstract class AbstractModuleCommand extends Command
      * @param ReadFactory $fileRead
      * @param FileWriteFactory $fileWrite
      * @param Files $filesUtility
+     * @param File $file
      * @param string|null $name
      */
     public function __construct(
@@ -116,6 +127,7 @@ abstract class AbstractModuleCommand extends Command
         ReadFactory $fileRead,
         FileWriteFactory $fileWrite,
         Files $filesUtility,
+        File $file,
         string $name = null
     ) {
         parent::__construct($name);
@@ -128,6 +140,7 @@ abstract class AbstractModuleCommand extends Command
         $this->fileWrite = $fileWrite;
         $this->filesUtility = $filesUtility;
         $this->xmlParser = $xmlParser;
+        $this->file = $file;
     }
 
     /**
@@ -154,8 +167,6 @@ abstract class AbstractModuleCommand extends Command
 
     /**
      * @param string $configFileName
-     * @throws FileSystemException
-     * @throws ValidatorException
      * @return array
      */
     protected function getConfigXmlData($configFileName)
@@ -218,6 +229,31 @@ abstract class AbstractModuleCommand extends Command
                 self::MODULE_OPTION_NAME,
                 $questionHelper->ask($input, $output, $question)
             );
+        }
+    }
+
+    /**
+     * Check if module is correct
+     *
+     * @param InputInterface $input
+     * @param OutputInterface $output
+     * @return void
+     */
+    protected function execute(InputInterface $input, OutputInterface $output)
+    {
+        $moduleInput = $input->getOption(self::MODULE_OPTION_NAME);
+
+        if (!$moduleInput) {
+            $output->writeln('<error>' . __(self::MESSAGE_MODULE_MISSING) . '</error>');
+            return;
+        }
+
+        $folderNames = explode('_', $moduleInput);
+        $modulePath = implode(DIRECTORY_SEPARATOR, $folderNames);
+
+        if (!$this->isModuleExist($modulePath)) {
+            $output->writeln('<error>' . __(self::MESSAGE_MODULE_NOT_EXIST) . '</error>');
+            return;
         }
     }
 
@@ -296,8 +332,12 @@ abstract class AbstractModuleCommand extends Command
     protected function createFile($path)
     {
         try {
-            $this->directoryWriteFactory->touch($path);
-            $this->output->writeln(__(self::MESSAGE_FILE_CREATED, $path));
+            if ($this->file->fileExists($path)) {
+                $this->output->writeln('<error>' . __(self::MESSAGE_FILE_EXIST, $path) . '</error>');
+            } else {
+                $this->directoryWriteFactory->touch($path);
+                $this->output->writeln(__(self::MESSAGE_FILE_CREATED, $path));
+            }
         } catch (FileSystemException $e) {
             $this->output->writeln('<error>' . $e->getMessage() . '</error>');
         } catch (ValidatorException $e) {

@@ -7,7 +7,6 @@ use Symfony\Component\Console\Helper\QuestionHelper;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Console\Question\ConfirmationQuestion;
 use Symfony\Component\Console\Question\Question;
 
 class CreateConfigurationFileCommand extends AbstractModuleCommand
@@ -62,7 +61,6 @@ class CreateConfigurationFileCommand extends AbstractModuleCommand
     }
 
     /**
-     * @inheridoc
      * @param InputInterface $input
      * @param OutputInterface $output
      * @throws FileSystemException
@@ -121,31 +119,34 @@ class CreateConfigurationFileCommand extends AbstractModuleCommand
 
         $areaPath = $etcPath ? 'etc' . DIRECTORY_SEPARATOR . $etcPath : 'etc';
         $moduleDir = $this->getModuleDir($areaPath, $moduleName);
+        $filePath = $moduleDir . DIRECTORY_SEPARATOR . $file;
 
-        $this->createFile($moduleDir . DIRECTORY_SEPARATOR . $file);
-        $this->generateXml(
-            $moduleDir . DIRECTORY_SEPARATOR . $file,
-            [$mainNode => [
-                '_attribute' => [
-                    self::MAIN_XML_ATTRIBUTE_NAME => self::MAIN_XML_ATTRIBUTE_VALUE,
-                    self::MODULE_XML_SCHEMA_ATTRIBUTE => $urn[0] ?? '',
-                ],
-                '_value' => null,
-            ]],
-            false
-        );
+        $this->createFile($filePath);
+
+        if (!$this->file->fileExists($filePath)) {
+            $this->generateXml(
+                $filePath,
+                [$mainNode => [
+                    '_attribute' => [
+                        self::MAIN_XML_ATTRIBUTE_NAME => self::MAIN_XML_ATTRIBUTE_VALUE,
+                        self::MODULE_XML_SCHEMA_ATTRIBUTE => $urn[0] ?? '',
+                    ],
+                    '_value' => null,
+                ]],
+                false
+            );
+        }
     }
 
     /**
      * Creates configuration file
      * @param InputInterface $input
      * @param OutputInterface $output
-     * @throws FileSystemException
-     * @throws ValidatorException
      * @return void
      */
     public function execute(InputInterface $input, OutputInterface $output)
     {
+        parent::execute($input, $output);
         $configFileInput = $input->getOption(self::CONFIGURATION_FILE_NAME);
         $configFileAreaInput = $input->getOption(self::CONFIGURATION_FILE_AREA_NAME);
         $moduleInput = $input->getOption(self::MODULE_OPTION_NAME);

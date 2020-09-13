@@ -5,6 +5,7 @@
             <argument name="commands" xsi:type="array">
                 <item name="create-module" xsi:type="object">Mistlanto\ModuleManager\Console\Command\CreateModuleCommand</item>
                 <item name="create-configuration-file" xsi:type="object">Mistlanto\ModuleManager\Console\Command\CreateConfigurationFileCommand</item>
+                <item name="create-controller" xsi:type="object">Mistlanto\ModuleManager\Console\Command\CreateControllerCommand</item>
             </argument>
         </arguments>
     </type>
