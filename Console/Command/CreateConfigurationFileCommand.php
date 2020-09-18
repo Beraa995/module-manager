@@ -121,9 +121,8 @@ class CreateConfigurationFileCommand extends AbstractModuleCommand
         $moduleDir = $this->getModuleDir($areaPath, $moduleName);
         $filePath = $moduleDir . DIRECTORY_SEPARATOR . $file;
 
-        $this->createFile($filePath);
-
         if (!$this->file->fileExists($filePath)) {
+            $this->createFile($filePath);
             $this->generateXml(
                 $filePath,
                 [$mainNode => [

@@ -9,6 +9,9 @@ use Symfony\Component\Console\Question\Question;
 
 class CreateControllerCommand extends AbstractModuleCommand
 {
+    /**
+     * Controller based constants
+     */
     const AREAS = [
         'frontend',
         'adminhtml'
@@ -19,6 +22,32 @@ class CreateControllerCommand extends AbstractModuleCommand
         'POST',
         'PUT',
         'DELETE'
+    ];
+    const CLASSES = [
+        'frontend' => [
+            'name' => 'Action',
+            'use' => 'use Magento\Framework\App\Action\Action;'
+        ],
+        'adminhtml' => [
+            'name' => 'Action',
+            'use' => 'use Magento\Backend\App\Action;'
+        ],
+        'get' => [
+            'name' => 'HttpGetActionInterface',
+            'use' => 'use Magento\Framework\App\Action\HttpGetActionInterface;'
+        ],
+        'post' => [
+            'name' => 'HttpPostActionInterface',
+            'use' => 'use Magento\Framework\App\Action\HttpPostActionInterface;'
+        ],
+        'put' => [
+            'name' => 'HttpPutActionInterface',
+            'use' => 'use Magento\Framework\App\Action\HttpPutActionInterface;'
+        ],
+        'delete' => [
+            'name' => 'HttpDeleteActionInterface',
+            'use' => 'use Magento\Framework\App\Action\HttpDeleteActionInterface;'
+        ],
     ];
 
     /**
@@ -33,6 +62,11 @@ class CreateControllerCommand extends AbstractModuleCommand
      */
     const MESSAGE_INVALID_CONTROLLER = 'Invalid controller path!';
     const MESSAGE_INVALID_AREA = 'Invalid controller area!';
+
+    /**
+     * Files constants
+     */
+    const CONTROLLER_FILE_NAME = 'controllerBase';
 
     /**
      * {@inheritdoc}
@@ -105,7 +139,7 @@ class CreateControllerCommand extends AbstractModuleCommand
 
         if (!$input->getOption(self::CONTROLLER_REQUEST)) {
             $question = new Question(
-                '<question>Which requests will controller process: (' . implode(',', self::REQUEST) . ')</question> ',
+                '<question>Comma separated requests: (' . implode(',', self::REQUEST) . ')</question> ',
                 ''
             );
 
@@ -128,12 +162,35 @@ class CreateControllerCommand extends AbstractModuleCommand
     {
         $controllerArea = $area ? $area : self::DEFAULT_AREA;
         $moduleDir = false;
+        $controllerName = false;
+        $namespace = false;
+        $parent = false;
+        $implementedInterfaces = [];
+        $useNamespaces = '';
 
         if (in_array($controllerArea, self::AREAS)) {
             if ($controllerArea !== 'frontend') {
                 $moduleDir = $this->getModuleDir('Controller/Adminhtml', $module);
+                $parent = self::CLASSES['adminhtml']['name'];
+                $useNamespaces .= self::CLASSES['adminhtml']['use'];
             } else {
                 $moduleDir = $this->getModuleDir('Controller', $module);
+                $parent = self::CLASSES['frontend']['name'];
+                $useNamespaces .= self::CLASSES['frontend']['use'];
+            }
+        }
+
+        if ($requests) {
+            $requestArray = explode(',', $requests);
+
+            foreach ($requestArray as $request) {
+                $lowCaseName = trim(strtolower($request));
+
+                if (isset(self::CLASSES[$lowCaseName])) {
+                    $useNamespaces .= PHP_EOL;
+                    $useNamespaces .= self::CLASSES[$lowCaseName]['use'];
+                    $implementedInterfaces[] = self::CLASSES[$lowCaseName]['name'];
+                }
             }
         }
 
@@ -142,7 +199,47 @@ class CreateControllerCommand extends AbstractModuleCommand
             return;
         }
 
-        $this->createFile($moduleDir . DIRECTORY_SEPARATOR . $controller . '.php');
+        if (strrpos($moduleDir, self::APP_CODE)) {
+            $namespace = substr($moduleDir, strrpos($moduleDir, self::APP_CODE) + strlen(self::APP_CODE));
+
+            if (strrpos($controller, '/')) {
+                $namespace .= DIRECTORY_SEPARATOR . substr($controller, 0, strrpos($controller, '/'));
+                $controllerName = substr($controller, strrpos($controller, '/') + 1);
+            } else {
+                $controllerName = $controller;
+            }
+        }
+
+        if (!$this->file->fileExists($moduleDir . DIRECTORY_SEPARATOR . $controller . '.php')) {
+            $this->createFile($moduleDir . DIRECTORY_SEPARATOR . $controller . '.php');
+            $controllerFileContent = $this->getFileContents(
+                self::FILES_DIR_NAME . DIRECTORY_SEPARATOR . self::CONTROLLER_FILE_NAME
+            );
+            $controllerFileContent = str_replace(
+                [
+                    self::NAMESPACE_REPLACE,
+                    self::USE_REPLACE,
+                    self::CLASSNAME_REPLACE,
+                    self::PARENT_REPLACE,
+                    self::IMPLEMENTS_REPLACE,
+                ],
+                [
+                    str_replace('/', '\\', $namespace),
+                    $useNamespaces,
+                    $controllerName,
+                    $parent,
+                    !empty($implementedInterfaces)
+                        ? 'implements ' . implode(', ', $implementedInterfaces)
+                        : ''
+                ],
+                $controllerFileContent
+            );
+            $this->writeToFile(
+                $moduleDir . DIRECTORY_SEPARATOR . $controller . '.php',
+                $controllerFileContent,
+                false
+            );
+        }
     }
 
     /**

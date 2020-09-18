@@ -31,6 +31,12 @@ abstract class AbstractModuleCommand extends Command
     const CODE_DIRECTORY = BP . DIRECTORY_SEPARATOR . 'app' . DIRECTORY_SEPARATOR . 'code' . DIRECTORY_SEPARATOR;
     const MODULE_NAME = 'Mistlanto_ModuleManager';
     const FILES_DIR_NAME = 'Files';
+    const APP_CODE = 'app/code/';
+    const NAMESPACE_REPLACE = '{namespace_replace}';
+    const USE_REPLACE = '{use_replace}';
+    const CLASSNAME_REPLACE = '{class_name_replace}';
+    const PARENT_REPLACE = '{parent_replace}';
+    const IMPLEMENTS_REPLACE = '{implements_replace}';
 
     /**
      * Command option params
@@ -310,14 +316,18 @@ abstract class AbstractModuleCommand extends Command
 
     /**
      * Write to the file
-     * @param string $filePathInCode
+     * @param string $filePath
      * @param $data
      * @return void
      */
-    protected function writeToFile($filePathInCode, $data)
+    protected function writeToFile($filePath, $data, $isCodeDir = true)
     {
         try {
-            $this->fileWrite->create(self::CODE_DIRECTORY . $filePathInCode, DriverPool::FILE, 'w')->write($data);
+            if ($isCodeDir) {
+                $this->fileWrite->create(self::CODE_DIRECTORY . $filePath, DriverPool::FILE, 'w')->write($data);
+            } else {
+                $this->fileWrite->create($filePath, DriverPool::FILE, 'w')->write($data);
+            }
         } catch (FileSystemException $e) {
             $this->output->writeln('<error>' . $e->getMessage() . '</error>');
         }
