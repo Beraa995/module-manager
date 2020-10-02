@@ -12,10 +12,6 @@ class CreateControllerCommand extends AbstractModuleCommand
     /**
      * Controller based constants
      */
-    const AREAS = [
-        'frontend',
-        'adminhtml'
-    ];
     const DEFAULT_AREA = 'frontend';
     const REQUEST = [
         'GET',
@@ -158,7 +154,7 @@ class CreateControllerCommand extends AbstractModuleCommand
      * @param OutputInterface $output
      * @return void
      */
-    protected function createController($module, $controller, $area, $requests, $output)
+    protected function createController($module, $controller, $area, $requests)
     {
         $controllerArea = $area ? $area : self::DEFAULT_AREA;
         $moduleDir = false;
@@ -195,7 +191,7 @@ class CreateControllerCommand extends AbstractModuleCommand
         }
 
         if (!$moduleDir) {
-            $output->writeln('<error>' . __(self::MESSAGE_INVALID_AREA) . '</error>');
+            $this->output->writeln('<error>' . __(self::MESSAGE_INVALID_AREA) . '</error>');
             return;
         }
 
@@ -261,6 +257,6 @@ class CreateControllerCommand extends AbstractModuleCommand
             return;
         }
 
-        $this->createController($moduleInput, $controllerPath, $controllerArea, $controllerRequests, $output);
+        $this->createController($moduleInput, $controllerPath, $controllerArea, $controllerRequests);
     }
 }

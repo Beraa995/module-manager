@@ -37,6 +37,10 @@ abstract class AbstractModuleCommand extends Command
     const CLASSNAME_REPLACE = '{class_name_replace}';
     const PARENT_REPLACE = '{parent_replace}';
     const IMPLEMENTS_REPLACE = '{implements_replace}';
+    const AREAS = [
+        'frontend',
+        'adminhtml'
+    ];
 
     /**
      * Command option params
@@ -47,6 +51,8 @@ abstract class AbstractModuleCommand extends Command
      * Messages
      */
     const MESSAGE_DIRECTORY_CREATED = 'Directory %1 is successfully created!';
+    const MESSAGE_FILE_FILLED_WITH_THE_CONTENT = 'Content is added to the %1!';
+    const MESSAGE_FILE_FILLED_WITH_THE_CONTENT_ERROR = 'Content can\'t be added to the %1!';
     const MESSAGE_FILE_CREATED = 'File %1 is successfully created!';
     const MESSAGE_FILE_EXIST = 'File %1 already exist!';
     const MESSAGE_MODULE_NOT_EXIST = 'Module doesn\'t exist in code directory!';
@@ -173,9 +179,10 @@ abstract class AbstractModuleCommand extends Command
 
     /**
      * @param string $configFileName
+     * @param bool $onlyNode
      * @return array
      */
-    protected function getConfigXmlData($configFileName)
+    protected function getConfigXmlData($configFileName, $onlyNode = false)
     {
         $files = $this->filesUtility->getXmlCatalogFiles($configFileName);
 
@@ -205,17 +212,115 @@ abstract class AbstractModuleCommand extends Command
             $matches = [];
             preg_match_all('/schemaLocation="(urn\:magento\:[^"]*)"/i', $content, $matches);
             if (isset($matches[1])) {
-                $data[] = [
-                    'node' => $mainNode,
-                    'urn' => $matches[1],
-                    'path' => $pathInEtc
-                ];
+                if ($onlyNode) {
+                    $data[] = $mainNode;
+                } else {
+                    $data[] = [
+                        'node' => $mainNode,
+                        'urn' => $matches[1],
+                        'path' => $pathInEtc
+                    ];
+                }
             }
         }
 
         $data = array_unique($data, SORT_REGULAR);
 
         return $data ?? null;
+    }
+
+    /**
+     * Fills xml file with given data
+     * @param string $file
+     * @param array $content
+     * @param string $contentFirstNode
+     * @return void
+     * @throws DOMException
+     */
+    protected function fillXmlFile($file, $content, $contentFirstNode)
+    {
+        // Current routes.xml content
+        $currentRoutesContent = $this->xmlParser->load($file)->getDom();
+        $childNodes = $currentRoutesContent->childNodes;
+        $destinationNode = null;
+        // XML created from the $content array
+        $newDom = $this->xmlGenerator->arrayToXml($content)->getDom();
+        $routerDomElement = $newDom->getElementsByTagName($contentFirstNode)->item(0);
+
+        $hasNodes = true;
+
+        while ($hasNodes) {
+            foreach ($childNodes as $node) {
+                if ($this->compareNodes($node, $routerDomElement)) {
+                    $routerDomElement = $routerDomElement->firstChild;
+                    $destinationNode = $node;
+                } else {
+                    $childNodes = [];
+                }
+
+                if ($node->nodeType === XML_ELEMENT_NODE) {
+                    $childNodes = $currentRoutesContent->getElementsByTagName($node->tagName)->item(0)->childNodes;
+                }
+
+                if (!count($childNodes)) {
+                    $hasNodes = false;
+                }
+            }
+        }
+
+        if ($destinationNode !== null) {
+            $destinationNode->appendChild($currentRoutesContent->importNode($routerDomElement, true));
+        } else {
+            $node = $currentRoutesContent->importNode($routerDomElement, true);
+            $currentRoutesContent->documentElement->appendChild($node);
+        }
+
+        $currentRoutesContent->preserveWhiteSpace = false;
+        $currentRoutesContent->formatOutput = true;
+
+        // Formatting xml
+        $newXmlContent = $currentRoutesContent->saveXML();
+        $currentRoutesContent->loadXML($newXmlContent);
+
+        if ($currentRoutesContent->save($file)) {
+            $this->output->writeln(__(self::MESSAGE_FILE_FILLED_WITH_THE_CONTENT, $file));
+        } else {
+            $this->output->writeln(__(self::MESSAGE_FILE_FILLED_WITH_THE_CONTENT_ERROR, $file));
+        }
+    }
+
+    /**
+     * Compares 2 DomDocument nodes
+     * @param $firstNode
+     * @param $secondNode
+     * @return bool
+     */
+    protected function compareNodes($firstNode, $secondNode)
+    {
+        $firstNodeAttributes = [];
+        $secondNodeAttributes = [];
+
+        if ($firstNode->nodeName === $secondNode->nodeName) {
+            foreach ($firstNode->attributes as $attribute) {
+                $firstNodeAttributes[] = [
+                    'name' => $attribute->name,
+                    'value' => $attribute->value
+                ];
+            }
+
+            foreach ($secondNode->attributes as $attribute) {
+                $secondNodeAttributes[] = [
+                    'name' => $attribute->name,
+                    'value' => $attribute->value
+                ];
+            }
+
+            if ($firstNodeAttributes === $secondNodeAttributes) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
