@@ -1,6 +1,7 @@
 <?php
 namespace Mistlanto\ModuleManager\Console\Command;
 
+use DOMException;
 use Magento\Framework\Exception\FileSystemException;
 use Magento\Framework\Exception\ValidatorException;
 use Symfony\Component\Console\Helper\QuestionHelper;
@@ -14,8 +15,9 @@ class CreateConfigurationFileCommand extends AbstractModuleCommand
     /**
      * Command option params
      */
-    const CONFIGURATION_FILE_NAME = 'cfile';
-    const CONFIGURATION_FILE_AREA_NAME = 'carea';
+    const CONFIGURATION_FILE_NAME = 'config-file';
+    const CONFIGURATION_FILE_AREA_NAME = 'config-area';
+    const CONFIGURATION_FILE_CONTENT = 'config-file-content';
 
     /**
      * Command messages
@@ -56,6 +58,12 @@ class CreateConfigurationFileCommand extends AbstractModuleCommand
                 null,
                 InputOption::VALUE_OPTIONAL,
                 'Configuration file area'
+            ),
+            new InputOption(
+                self::CONFIGURATION_FILE_CONTENT,
+                null,
+                InputOption::VALUE_OPTIONAL,
+                'Configuration file content array'
             )
         ];
     }
@@ -63,8 +71,6 @@ class CreateConfigurationFileCommand extends AbstractModuleCommand
     /**
      * @param InputInterface $input
      * @param OutputInterface $output
-     * @throws FileSystemException
-     * @throws ValidatorException
      */
     protected function interact(InputInterface $input, OutputInterface $output)
     {
@@ -74,17 +80,19 @@ class CreateConfigurationFileCommand extends AbstractModuleCommand
 
         if (!$input->getOption(self::CONFIGURATION_FILE_NAME)) {
             $question = new Question('<question>Configuration file:</question> ', '');
-            $file = $questionHelper->ask($input, $output, $question);
-            $configData = [];
-            $xmlData = $this->getConfigXmlData($file);
 
             $input->setOption(
                 self::CONFIGURATION_FILE_NAME,
-                $file
+                $questionHelper->ask($input, $output, $question)
             );
+        }
+
+        if ($file = $input->getOption(self::CONFIGURATION_FILE_NAME)) {
+            $configData = [];
+            $xmlData = $this->getConfigXmlData($file);
 
             if (is_array($xmlData)) {
-                foreach ($this->getConfigXmlData($file) as $data) {
+                foreach ($xmlData as $data) {
                     $configData[] = $data['path'] ? $data['path'] : 'global';
                 }
             }
@@ -92,7 +100,7 @@ class CreateConfigurationFileCommand extends AbstractModuleCommand
             if (count($configData) > 1) {
                 $this->output->writeln(__('You have to select one of the following areas: %1', implode(',', $configData)));
 
-                $question = new Question('<question>Configuration file area:</question> ', '');
+                $question = new Question('<question>' . $file . ' configuration file area:</question> ', '');
                 $area = $questionHelper->ask($input, $output, $question);
 
                 $input->setOption(
@@ -110,8 +118,10 @@ class CreateConfigurationFileCommand extends AbstractModuleCommand
      * @param string $urn
      * @param string $etcPath
      * @param string $mainNode
+     * @param array $content
+     * @throws DOMException
      */
-    protected function createConfiguration($moduleName, $file, $urn, $etcPath, $mainNode)
+    protected function createConfiguration($moduleName, $file, $urn, $etcPath, $mainNode, $content)
     {
         if (!$etcPath) {
             $etcPath = '';
@@ -122,6 +132,7 @@ class CreateConfigurationFileCommand extends AbstractModuleCommand
         $filePath = $moduleDir . DIRECTORY_SEPARATOR . $file;
 
         if (!$this->file->fileExists($filePath)) {
+            // @TODO Move create file in generateXML. Similar to method writeToFile
             $this->createFile($filePath);
             $this->generateXml(
                 $filePath,
@@ -135,6 +146,8 @@ class CreateConfigurationFileCommand extends AbstractModuleCommand
                 false
             );
         }
+
+        $this->fillXmlFile($filePath, $content);
     }
 
     /**
@@ -142,6 +155,7 @@ class CreateConfigurationFileCommand extends AbstractModuleCommand
      * @param InputInterface $input
      * @param OutputInterface $output
      * @return void
+     * @throws DOMException
      */
     public function execute(InputInterface $input, OutputInterface $output)
     {
@@ -149,6 +163,7 @@ class CreateConfigurationFileCommand extends AbstractModuleCommand
         $configFileInput = $input->getOption(self::CONFIGURATION_FILE_NAME);
         $configFileAreaInput = $input->getOption(self::CONFIGURATION_FILE_AREA_NAME);
         $moduleInput = $input->getOption(self::MODULE_OPTION_NAME);
+        $content = $input->getOption(self::CONFIGURATION_FILE_CONTENT);
 
         if (!$configFileInput) {
             $output->writeln('<error>' . __(self::MESSAGE_CONFIGURATION_INVALID) . '</error>');
@@ -169,7 +184,8 @@ class CreateConfigurationFileCommand extends AbstractModuleCommand
                     $configFileInput,
                     $xmlData[0]['urn'],
                     $xmlData[0]['path'],
-                    $xmlData[0]['node']
+                    $xmlData[0]['node'],
+                    $content
                 );
             } else {
                 $hasData = false;
@@ -181,7 +197,8 @@ class CreateConfigurationFileCommand extends AbstractModuleCommand
                             $configFileInput,
                             $data['urn'],
                             $data['path'],
-                            $data['node']
+                            $data['node'],
+                            $content
                         );
                     }
                 }

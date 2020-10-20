@@ -24,10 +24,10 @@ class CreateRouteCommand extends AbstractModuleCommand
     /**
      * Command option params
      */
-    const ROUTER_ID = 'routerid';
-    const ROUTE_ID = 'routeid';
-    const ROUTE_FRONT_NAME = 'routefront';
-    const ROUTE_AREA = 'routearea';
+    const ROUTER_ID = 'router-id';
+    const ROUTE_ID = 'route-id';
+    const ROUTE_FRONT_NAME = 'route-frontname';
+    const ROUTE_AREA = 'route-area';
     const FRONT_ROUTERS = [
         'robots',
         'urlrewrite',
@@ -202,29 +202,15 @@ class CreateRouteCommand extends AbstractModuleCommand
      * @param string $routeArea
      * @param string $routeFrontName
      * @param string $routerId
-     * @throws DOMException
      */
     protected function createRoute($moduleInput, $routeId, $routeArea, $routeFrontName, $routerId)
     {
-        $moduleDir = null;
-        $area = $routeArea;
         $router = null;
 
-        if ($routeArea && in_array($routeArea, self::AREAS)) {
-            if ($routeArea !== 'frontend') {
-                $area = 'adminhtml';
-                $moduleDir = $this->getModuleDir('etc/adminhtml', $moduleInput);
-                $router = !trim($routerId) ? 'admin' : $routerId;
-            } else {
-                $area = 'frontend';
-                $moduleDir = $this->getModuleDir('etc/frontend', $moduleInput);
-                $router = !trim($routerId) ? 'standard' : $routerId;
-            }
-        }
-
-        if (!$moduleDir) {
-            $this->output->writeln('<error>' . __(self::MESSAGE_MODULE_NOT_EXIST) . '</error>');
-            return;
+        if ($routeArea !== 'frontend') {
+            $router = !trim($routerId) ? 'admin' : $routerId;
+        } else {
+            $router = !trim($routerId) ? 'standard' : $routerId;
         }
 
         if (!$router) {
@@ -232,7 +218,6 @@ class CreateRouteCommand extends AbstractModuleCommand
             return;
         }
 
-        $file = $moduleDir . DIRECTORY_SEPARATOR . self::ROUTES_FILE;
         $routeContentArrayForXml = [
             'router' => [
                 '_attribute' => [
@@ -257,28 +242,26 @@ class CreateRouteCommand extends AbstractModuleCommand
             ]
         ];
 
-        if (!$this->file->fileExists($file)) {
-            $this->createRoutesFile($moduleInput, self::ROUTES_FILE, $area);
-            $this->fillXmlFile($file, $routeContentArrayForXml, 'router');
-        } else {
-            $this->fillXmlFile($file, $routeContentArrayForXml, 'router');
-        }
+        $this->createRoutesFile($moduleInput, self::ROUTES_FILE, $routeArea, $routeContentArrayForXml);
     }
 
     /**
-     * Creates a routes.xml configuration file
+     * Creates a route
      * @param string $module
      * @param string $file
      * @param string $area
+     * @param array $content
      * @return void
      */
-    protected function createRoutesFile($module, $file, $area)
+    protected function createRoutesFile($module, $file, $area, $content)
     {
         $input = new ArrayInput([
             '--' . self::MODULE_OPTION_NAME => $module,
             '--' . CreateConfigurationFileCommand::CONFIGURATION_FILE_NAME => $file,
-            '--' . CreateConfigurationFileCommand::CONFIGURATION_FILE_AREA_NAME => $area
+            '--' . CreateConfigurationFileCommand::CONFIGURATION_FILE_AREA_NAME => $area,
+            '--' . CreateConfigurationFileCommand::CONFIGURATION_FILE_CONTENT => $content
         ]);
+        $input->setInteractive(true);
 
         try {
             $this->configurationFileCommand->run($input, $this->output);

@@ -22,27 +22,27 @@ class CreateControllerCommand extends AbstractModuleCommand
     const CLASSES = [
         'frontend' => [
             'name' => 'Action',
-            'use' => 'use Magento\Framework\App\Action\Action;'
+            'useClass' => 'use Magento\Framework\App\Action\Action;'
         ],
         'adminhtml' => [
             'name' => 'Action',
-            'use' => 'use Magento\Backend\App\Action;'
+            'useClass' => 'use Magento\Backend\App\Action;'
         ],
         'get' => [
             'name' => 'HttpGetActionInterface',
-            'use' => 'use Magento\Framework\App\Action\HttpGetActionInterface;'
+            'useClass' => 'use Magento\Framework\App\Action\HttpGetActionInterface;'
         ],
         'post' => [
             'name' => 'HttpPostActionInterface',
-            'use' => 'use Magento\Framework\App\Action\HttpPostActionInterface;'
+            'useClass' => 'use Magento\Framework\App\Action\HttpPostActionInterface;'
         ],
         'put' => [
             'name' => 'HttpPutActionInterface',
-            'use' => 'use Magento\Framework\App\Action\HttpPutActionInterface;'
+            'useClass' => 'use Magento\Framework\App\Action\HttpPutActionInterface;'
         ],
         'delete' => [
             'name' => 'HttpDeleteActionInterface',
-            'use' => 'use Magento\Framework\App\Action\HttpDeleteActionInterface;'
+            'useClass' => 'use Magento\Framework\App\Action\HttpDeleteActionInterface;'
         ],
     ];
 
@@ -58,11 +58,6 @@ class CreateControllerCommand extends AbstractModuleCommand
      */
     const MESSAGE_INVALID_CONTROLLER = 'Invalid controller path!';
     const MESSAGE_INVALID_AREA = 'Invalid controller area!';
-
-    /**
-     * Files constants
-     */
-    const CONTROLLER_FILE_NAME = 'controllerBase';
 
     /**
      * {@inheritdoc}
@@ -112,15 +107,6 @@ class CreateControllerCommand extends AbstractModuleCommand
         /** @var QuestionHelper $questionHelper */
         $questionHelper = $this->getHelper('question');
 
-        if (!$input->getOption(self::CONTROLLER_PATH)) {
-            $question = new Question('<question>Controller path: (example: Mistlanto/Index)</question> ', '');
-
-            $input->setOption(
-                self::CONTROLLER_PATH,
-                trim($questionHelper->ask($input, $output, $question), '/')
-            );
-        }
-
         if (!$input->getOption(self::CONTROLLER_AREA)) {
             $question = new Question(
                 '<question>Controller area: (' . implode(',', self::AREAS) . ')</question> ',
@@ -130,6 +116,15 @@ class CreateControllerCommand extends AbstractModuleCommand
             $input->setOption(
                 self::CONTROLLER_AREA,
                 $questionHelper->ask($input, $output, $question)
+            );
+        }
+
+        if (!$input->getOption(self::CONTROLLER_PATH)) {
+            $question = new Question('<question>Controller path: (example: Mistlanto/Index)</question> ', '');
+
+            $input->setOption(
+                self::CONTROLLER_PATH,
+                trim($questionHelper->ask($input, $output, $question), '/')
             );
         }
 
@@ -147,20 +142,31 @@ class CreateControllerCommand extends AbstractModuleCommand
     }
 
     /**
+     * Returns function string for the controller file
+     * @return string
+     */
+    protected function createExecuteFunction()
+    {
+        return $this->createFunctionString(
+            self::PUBLIC_FUNCTION,
+            'execute',
+            ''
+        );
+    }
+
+    /**
      * @param string $module
      * @param string $controller
      * @param string $area
      * @param string $requests
-     * @param OutputInterface $output
      * @return void
      */
     protected function createController($module, $controller, $area, $requests)
     {
         $controllerArea = $area ? $area : self::DEFAULT_AREA;
-        $moduleDir = false;
-        $controllerName = false;
-        $namespace = false;
-        $parent = false;
+        $moduleDir = null;
+        $classSplit = null;
+        $parent = null;
         $implementedInterfaces = [];
         $useNamespaces = '';
 
@@ -168,11 +174,11 @@ class CreateControllerCommand extends AbstractModuleCommand
             if ($controllerArea !== 'frontend') {
                 $moduleDir = $this->getModuleDir('Controller/Adminhtml', $module);
                 $parent = self::CLASSES['adminhtml']['name'];
-                $useNamespaces .= self::CLASSES['adminhtml']['use'];
+                $useNamespaces .= self::CLASSES['adminhtml']['useClass'];
             } else {
                 $moduleDir = $this->getModuleDir('Controller', $module);
                 $parent = self::CLASSES['frontend']['name'];
-                $useNamespaces .= self::CLASSES['frontend']['use'];
+                $useNamespaces .= self::CLASSES['frontend']['useClass'];
             }
         }
 
@@ -184,7 +190,7 @@ class CreateControllerCommand extends AbstractModuleCommand
 
                 if (isset(self::CLASSES[$lowCaseName])) {
                     $useNamespaces .= PHP_EOL;
-                    $useNamespaces .= self::CLASSES[$lowCaseName]['use'];
+                    $useNamespaces .= self::CLASSES[$lowCaseName]['useClass'];
                     $implementedInterfaces[] = self::CLASSES[$lowCaseName]['name'];
                 }
             }
@@ -196,46 +202,25 @@ class CreateControllerCommand extends AbstractModuleCommand
         }
 
         if (strrpos($moduleDir, self::APP_CODE)) {
-            $namespace = substr($moduleDir, strrpos($moduleDir, self::APP_CODE) + strlen(self::APP_CODE));
-
-            if (strrpos($controller, '/')) {
-                $namespace .= DIRECTORY_SEPARATOR . substr($controller, 0, strrpos($controller, '/'));
-                $controllerName = substr($controller, strrpos($controller, '/') + 1);
-            } else {
-                $controllerName = $controller;
-            }
+            $class = substr($moduleDir, strrpos($moduleDir, self::APP_CODE) + strlen(self::APP_CODE));
+            $class .= DIRECTORY_SEPARATOR . $controller;
+            // Namespace and class name
+            $classSplit = $this->parseClassString($class);
         }
 
-        if (!$this->file->fileExists($moduleDir . DIRECTORY_SEPARATOR . $controller . '.php')) {
-            $this->createFile($moduleDir . DIRECTORY_SEPARATOR . $controller . '.php');
-            $controllerFileContent = $this->getFileContents(
-                self::FILES_DIR_NAME . DIRECTORY_SEPARATOR . self::CONTROLLER_FILE_NAME
-            );
-            $controllerFileContent = str_replace(
-                [
-                    self::NAMESPACE_REPLACE,
-                    self::USE_REPLACE,
-                    self::CLASSNAME_REPLACE,
-                    self::PARENT_REPLACE,
-                    self::IMPLEMENTS_REPLACE,
-                ],
-                [
-                    str_replace('/', '\\', $namespace),
-                    $useNamespaces,
-                    $controllerName,
-                    $parent,
-                    !empty($implementedInterfaces)
-                        ? 'implements ' . implode(', ', $implementedInterfaces)
-                        : ''
-                ],
-                $controllerFileContent
-            );
-            $this->writeToFile(
-                $moduleDir . DIRECTORY_SEPARATOR . $controller . '.php',
-                $controllerFileContent,
-                false
-            );
-        }
+        $file = $moduleDir . DIRECTORY_SEPARATOR . $controller . '.php';
+        $this->createClass(
+            $file,
+            $classSplit['ns'] ?? '',
+            $useNamespaces,
+            $classSplit['className'] ?? '',
+            $parent,
+            !empty($implementedInterfaces)
+                ? implode(', ', $implementedInterfaces)
+                : '',
+            '',
+            $this->createExecuteFunction()
+        );
     }
 
     /**

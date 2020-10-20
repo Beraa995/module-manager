@@ -172,12 +172,12 @@ class CreateModuleCommand extends AbstractModuleCommand
         }
 
         $this->createDirectory($modulePath);
-        $this->createFile($modulePath . DIRECTORY_SEPARATOR . 'registration.php');
         $this->createFile($modulePath . DIRECTORY_SEPARATOR . 'etc' . DIRECTORY_SEPARATOR . 'module.xml');
         $this->fillModuleXml($modulePath, $moduleName, $dependencies);
         $this->writeToFile(
             $modulePath . DIRECTORY_SEPARATOR . 'registration.php',
-            $registrationFileContent
+            $registrationFileContent,
+            true
         );
     }
 }

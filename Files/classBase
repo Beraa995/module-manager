@@ -1,0 +1,8 @@
+<?php
+namespace {namespace_replace};
+{use_replace}
+class {class_name_replace}{parent_replace}{implements_replace}
+{
+{properties_replace}
+{functions_replace}
+}
