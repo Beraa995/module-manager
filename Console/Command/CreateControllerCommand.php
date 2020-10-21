@@ -149,8 +149,7 @@ class CreateControllerCommand extends AbstractModuleCommand
     {
         return $this->createFunctionString(
             self::PUBLIC_FUNCTION,
-            'execute',
-            ''
+            'execute'
         );
     }
 
@@ -189,7 +188,7 @@ class CreateControllerCommand extends AbstractModuleCommand
                 $lowCaseName = trim(strtolower($request));
 
                 if (isset(self::CLASSES[$lowCaseName])) {
-                    $useNamespaces .= PHP_EOL;
+                    $useNamespaces .= "\n";
                     $useNamespaces .= self::CLASSES[$lowCaseName]['useClass'];
                     $implementedInterfaces[] = self::CLASSES[$lowCaseName]['name'];
                 }
@@ -201,10 +200,8 @@ class CreateControllerCommand extends AbstractModuleCommand
             return;
         }
 
-        if (strrpos($moduleDir, self::APP_CODE)) {
-            $class = substr($moduleDir, strrpos($moduleDir, self::APP_CODE) + strlen(self::APP_CODE));
+        if ($class = $this->getModuleDirInCode($moduleDir)) {
             $class .= DIRECTORY_SEPARATOR . $controller;
-            // Namespace and class name
             $classSplit = $this->parseClassString($class);
         }
 

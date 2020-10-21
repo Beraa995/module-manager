@@ -261,8 +261,10 @@ class CreatePluginCommand extends AbstractModuleCommand
     protected function createPluginClass($module, $pluginClass, $targetClass, $targetMethod, $methodData)
     {
         $classSplit = $this->parseClassString($pluginClass);
+        //@TODO Add empty line after each function
         $functions = $this->createPluginFunctions($targetClass, $targetMethod, $methodData);
 
+        //@TODO Provide functions as an array
         $this->createClass(
             str_replace('\\', '/', trim($pluginClass, '\\')) . '.php',
             $classSplit['ns'] ?? '',
@@ -272,7 +274,7 @@ class CreatePluginCommand extends AbstractModuleCommand
             '',
             '',
             $functions,
-            $isCodeDir = true
+            true
         );
     }
 

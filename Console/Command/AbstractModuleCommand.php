@@ -1,7 +1,6 @@
 <?php
 namespace Mistlanto\ModuleManager\Console\Command;
 
-use _HumbugBox10beb0db089e\Roave\BetterReflection\Reflection\ReflectionNamedType;
 use DOMException;
 use Magento\Framework\App\Utility\Files;
 use Magento\Framework\Exception\FileSystemException;
@@ -46,6 +45,7 @@ abstract class AbstractModuleCommand extends Command
     const FUNCTION_MODIFIER_REPLACE = '{access_modifier_function}';
     const FUNCTION_NAME_REPLACE = '{function_name}';
     const FUNCTION_ARGUMENT_REPLACE = '{function_arguments}';
+    const FUNCTION_BODY_REPLACE = '{function_body}';
     const PUBLIC_FUNCTION = 'public function';
     const AREAS = [
         'frontend',
@@ -317,9 +317,10 @@ abstract class AbstractModuleCommand extends Command
      * @param string $modifier
      * @param string $functionName
      * @param string $functionArguments
+     * @param string $functionBody
      * @return string
      */
-    protected function createFunctionString($modifier, $functionName, $functionArguments)
+    protected function createFunctionString($modifier, $functionName, $functionArguments = '', $functionBody = '')
     {
         $function =  $this->getFileContents(
             self::FILES_DIR_NAME . DIRECTORY_SEPARATOR . self::FUNCTION_FILE_NAME
@@ -329,15 +330,28 @@ abstract class AbstractModuleCommand extends Command
             [
                 self::FUNCTION_MODIFIER_REPLACE,
                 self::FUNCTION_NAME_REPLACE,
-                self::FUNCTION_ARGUMENT_REPLACE
+                self::FUNCTION_ARGUMENT_REPLACE,
+                self::FUNCTION_BODY_REPLACE
             ],
             [
                 $modifier,
                 $functionName,
                 $functionArguments,
+                $functionBody
             ],
             $function
         ));
+    }
+
+    /**
+     * Returns property string for the class
+     * @param string $propertyName
+     * @param string $propertyValue
+     * @return string
+     */
+    protected function createPropertyString($propertyName, $propertyValue)
+    {
+        return $propertyName . ' = ' . $propertyValue . ';';
     }
 
     /**
@@ -549,8 +563,8 @@ abstract class AbstractModuleCommand extends Command
      * @param string $className
      * @param string $parent
      * @param string $implements
-     * @param string $properties
-     * @param string $functions
+     * @param array|string $properties
+     * @param array|string $functions
      * @param bool $isCodeDir
      */
     protected function createClass(
@@ -579,12 +593,12 @@ abstract class AbstractModuleCommand extends Command
             ],
             [
                 $namespace,
-                PHP_EOL . $use . PHP_EOL,
+                "\n" . $use . "\n",
                 $className,
                 $parent ? ' extends ' . $parent : '',
                 $implements ? ' implements ' . $implements : '',
-                $this->indentEachLineOfString($properties),
-                PHP_EOL . $this->indentEachLineOfString($functions) . PHP_EOL
+                $this->indentEachLine($properties),
+                "\n" . $this->indentEachLine($functions, "\n") . "\n"
             ],
             $controllerFileContent
         );
@@ -608,12 +622,21 @@ abstract class AbstractModuleCommand extends Command
     }
 
     /**
-     * Add tab before every new line in the string
-     * @param string $content
+     * Indent line in the string
+     * @param array|string $content
+     * @param string $implodeGlue
      * @return string
      */
-    protected function indentEachLineOfString($content)
+    protected function indentEachLine($content, $implodeGlue = "\n\n")
     {
+        if (is_array($content)) {
+            foreach ($content as &$line) {
+                $line = preg_replace('/^/m', "    ", $line);
+            }
+
+            return implode($implodeGlue, $content);
+        }
+
         //@TODO replace spaces with characters
         return preg_replace('/^/m', "    ", $content);
     }
@@ -658,6 +681,20 @@ abstract class AbstractModuleCommand extends Command
     protected function getModuleDir($folderPath = '', $moduleDir = self::MODULE_NAME)
     {
         return $this->moduleReader->getDir($moduleDir) . DIRECTORY_SEPARATOR . $folderPath;
+    }
+
+    /**
+     * Returns module directory path in code dir based on the absolute path
+     * @param string $moduleDir
+     * @return string
+     */
+    protected function getModuleDirInCode($moduleDir)
+    {
+        if (strrpos($moduleDir, self::APP_CODE)) {
+            return substr($moduleDir, strrpos($moduleDir, self::APP_CODE) + strlen(self::APP_CODE));
+        }
+
+        return null;
     }
 
     /**

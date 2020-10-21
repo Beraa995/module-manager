@@ -8,6 +8,7 @@
                 <item name="create-controller" xsi:type="object">Mistlanto\ModuleManager\Console\Command\CreateControllerCommand</item>
                 <item name="create-route" xsi:type="object">Mistlanto\ModuleManager\Console\Command\CreateRouteCommand</item>
                 <item name="create-plugin" xsi:type="object">Mistlanto\ModuleManager\Console\Command\CreatePluginCommand</item>
+                <item name="create-crud" xsi:type="object">Mistlanto\ModuleManager\Console\Command\CreateModelsCommand</item>
             </argument>
         </arguments>
     </type>
