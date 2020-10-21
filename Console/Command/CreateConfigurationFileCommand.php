@@ -132,7 +132,6 @@ class CreateConfigurationFileCommand extends AbstractModuleCommand
         $filePath = $moduleDir . DIRECTORY_SEPARATOR . $file;
 
         if (!$this->file->fileExists($filePath)) {
-            // @TODO Move create file in generateXML. Similar to method writeToFile
             $this->createFile($filePath);
             $this->generateXml(
                 $filePath,

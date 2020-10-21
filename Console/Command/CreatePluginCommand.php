@@ -159,10 +159,7 @@ class CreatePluginCommand extends AbstractModuleCommand
         $questionHelper = $this->getHelper('question');
 
         if (!$input->getOption(self::PLUGIN_CLASS)) {
-            $question = new Question(
-                '<question>Plugin class:</question> ',
-                'frontend'
-            );
+            $question = new Question('<question>Plugin class:</question> ', '');
 
             $input->setOption(
                 self::PLUGIN_CLASS,
@@ -206,7 +203,6 @@ class CreatePluginCommand extends AbstractModuleCommand
      */
     public function execute(InputInterface $input, OutputInterface $output)
     {
-        //@TODO Check all inputs of classes (with or without \)...
         parent::execute($input, $output);
 
         $moduleInput = $input->getOption(self::MODULE_OPTION_NAME);
@@ -235,7 +231,6 @@ class CreatePluginCommand extends AbstractModuleCommand
             return;
         }
 
-        //@TODO Check if method is public and other things for the plugin
         $methodData = $this->getMethodData($targetClass, $targetMethod);
 
         if (!isset($methodData['isPublic'])) {
@@ -247,11 +242,15 @@ class CreatePluginCommand extends AbstractModuleCommand
             return;
         }
 
+        $pluginClass = str_replace('/', '\\', $pluginClass);
+        $targetClass = str_replace('/', '\\', $targetClass);
+
         $this->createPluginInXml($moduleInput, $pluginClass, $targetClass, $pluginName);
         $this->createPluginClass($moduleInput, $pluginClass, $targetClass, $targetMethod, $methodData);
     }
 
     /**
+     * Creates plugin class
      * @param $module
      * @param $pluginClass
      * @param $targetClass
@@ -261,10 +260,8 @@ class CreatePluginCommand extends AbstractModuleCommand
     protected function createPluginClass($module, $pluginClass, $targetClass, $targetMethod, $methodData)
     {
         $classSplit = $this->parseClassString($pluginClass);
-        //@TODO Add empty line after each function
         $functions = $this->createPluginFunctions($targetClass, $targetMethod, $methodData);
 
-        //@TODO Provide functions as an array
         $this->createClass(
             str_replace('\\', '/', trim($pluginClass, '\\')) . '.php',
             $classSplit['ns'] ?? '',
@@ -283,32 +280,32 @@ class CreatePluginCommand extends AbstractModuleCommand
      * @param $targetClass
      * @param $targetMethod
      * @param $methodData
-     * @return string
+     * @return array
      */
     protected function createPluginFunctions($targetClass, $targetMethod, $methodData)
     {
         $classSplit = $this->parseClassString($targetClass);
         $subjectArgument = $classSplit['className'] . ' $subject, ';
         $parameters = [];
-        $functions = '';
+        $functions = [];
 
         foreach ($methodData['params'] as $param) {
             $parameters[] = '$' . $param['name'];
         }
 
-        $functions.= $this->createFunctionString(
+        $functions[]= $this->createFunctionString(
             self::PUBLIC_FUNCTION,
             'before' . $this->firstUpper($targetMethod),
             $subjectArgument . implode(', ', $parameters)
         );
 
-        $functions.= $this->createFunctionString(
+        $functions[]= $this->createFunctionString(
             self::PUBLIC_FUNCTION,
             'around' . $this->firstUpper($targetMethod),
             $subjectArgument . '\\Closure $proceed, ' . implode(', ', $parameters)
         );
 
-        $functions.= $this->createFunctionString(
+        $functions[]= $this->createFunctionString(
             self::PUBLIC_FUNCTION,
             'after' . $this->firstUpper($targetMethod),
             $subjectArgument . '$result, ' . implode(', ', $parameters)
@@ -318,7 +315,7 @@ class CreatePluginCommand extends AbstractModuleCommand
     }
 
     /**
-     * Creates a plugin
+     * Adds plugin definition in the xml
      * @param string $module
      * @param string $pluginClass
      * @param string $targetClass

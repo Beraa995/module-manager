@@ -154,11 +154,10 @@ class CreateModelsCommand extends AbstractModuleCommand
         $modulePathInCode = $this->getModuleDirInCode($moduleDirPath);
 
         if (!$modulePathInCode) {
-            //@TODO render error and exit
+            $this->output->writeln('<error>' . __(self::MESSAGE_MODULE_NOT_EXIST) . '</error>');
         }
 
-        //@TODO Check if is identity
-        //@TODO Service contracts?
+        //@TODO Service contracts
 
         $this->createModel($modulePathInCode, $modelName, $dbName, $isExtensible, $isIdentity);
         $this->createResourceModel($modulePathInCode, $modelName, $dbName, $primaryField);
@@ -282,7 +281,6 @@ class CreateModelsCommand extends AbstractModuleCommand
      */
     protected function createModel($modulePathInCode, $modelName, $dbName, $isExtensible, $isIdentity)
     {
-        //@TODO Implement interface for extensible model
         $class = $modulePathInCode . DIRECTORY_SEPARATOR . $modelName;
         $parent = $isExtensible ? self::MODEL_PARENT_EXTENSIBLE : self::MODEL_PARENT;
         $classSplit = $this->parseClassString($class);

@@ -363,7 +363,7 @@ abstract class AbstractModuleCommand extends Command
     protected function getMethodData($class, $method)
     {
         try {
-            $reflectionClass = new ReflectionClass($class);
+            $reflectionClass = new ReflectionClass(str_replace('/', '\\', $class));
             $methodData['isPublic'] = $reflectionClass->getMethod($method)->isPublic();
             $methodData['params'] = [];
 
@@ -637,7 +637,6 @@ abstract class AbstractModuleCommand extends Command
             return implode($implodeGlue, $content);
         }
 
-        //@TODO replace spaces with characters
         return preg_replace('/^/m', "    ", $content);
     }
 
@@ -698,23 +697,23 @@ abstract class AbstractModuleCommand extends Command
     }
 
     /**
-     * Generates xml content
-     * @param string $modulePath
+     * Generates main xml content
+     * @param string $filePath
      * @param array $array
      * @param bool $isCodeDir
      * @param string $indexedArrayItem
      * @return void
      */
-    protected function generateXml($modulePath, $array, $isCodeDir = true, $indexedArrayItem = 'item')
+    protected function generateXml($filePath, $array, $isCodeDir = true, $indexedArrayItem = 'item')
     {
         try {
             $this->xmlGenerator->setIndexedArrayItemName($indexedArrayItem);
             $this->xmlGenerator->arrayToXml($array);
 
             if ($isCodeDir) {
-                $this->xmlGenerator->save(self::CODE_DIRECTORY . $modulePath);
+                $this->xmlGenerator->save(self::CODE_DIRECTORY . $filePath);
             } else {
-                $this->xmlGenerator->save($modulePath);
+                $this->xmlGenerator->save($filePath);
             }
         } catch (DOMException $e) {
             $this->output->writeln('<error>' . $e->getMessage() . '</error>');
