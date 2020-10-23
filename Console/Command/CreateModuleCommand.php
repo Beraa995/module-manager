@@ -43,7 +43,7 @@ class CreateModuleCommand extends AbstractModuleCommand
     protected function configure()
     {
         $this->setName('mistlanto:module:create')
-            ->setDescription('Creates module with required files');
+            ->setDescription('Creates a module with required files');
 
         parent::configure();
     }
@@ -65,12 +65,12 @@ class CreateModuleCommand extends AbstractModuleCommand
 
     /**
      * Generates content for module.xml
-     * @param string $modulePath
+     * @param string $file
      * @param string $moduleInput
      * @param array $dependencies
      * @return void
      */
-    protected function fillModuleXml($modulePath, $moduleInput, $dependencies)
+    protected function fillModuleXml($file, $moduleInput, $dependencies)
     {
         $deps = [
             'sequence' => []
@@ -88,7 +88,7 @@ class CreateModuleCommand extends AbstractModuleCommand
         }
 
         $this->generateXml(
-            $modulePath . DIRECTORY_SEPARATOR . 'etc' . DIRECTORY_SEPARATOR . 'module.xml',
+            $file,
             ['config' => [
                 '_attribute' => [
                     self::MAIN_XML_ATTRIBUTE_NAME => self::MAIN_XML_ATTRIBUTE_VALUE,
@@ -110,8 +110,6 @@ class CreateModuleCommand extends AbstractModuleCommand
 
     /**
      * @inheridoc
-     * @param InputInterface $input
-     * @param OutputInterface $output
      */
     protected function interact(InputInterface $input, OutputInterface $output)
     {
@@ -120,7 +118,10 @@ class CreateModuleCommand extends AbstractModuleCommand
         $questionHelper = $this->getHelper('question');
 
         if (!$input->getOption(self::MODULE_DEPENDENCY_NAME)) {
-            $confirmationQuestion = new ConfirmationQuestion('<question>Does module have dependencies? (y/n)</question> ', false);
+            $confirmationQuestion = new ConfirmationQuestion(
+                '<question>Does module have dependencies? (y/n)</question> ',
+                false
+            );
 
             if ($questionHelper->ask($input, $output, $confirmationQuestion)) {
                 $question = new Question('<question>Enter comma separated module names:</question> ', '');
@@ -141,6 +142,7 @@ class CreateModuleCommand extends AbstractModuleCommand
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
+        //@TODO Create composer.json file
         $moduleInput = $input->getOption(self::MODULE_OPTION_NAME);
         $dependencies = $input->getOption(self::MODULE_DEPENDENCY_NAME);
 
@@ -171,9 +173,10 @@ class CreateModuleCommand extends AbstractModuleCommand
             return;
         }
 
+        $file = $modulePath . DIRECTORY_SEPARATOR . 'etc' . DIRECTORY_SEPARATOR . 'module.xml';
+
         $this->createDirectory($modulePath);
-        $this->createFile($modulePath . DIRECTORY_SEPARATOR . 'etc' . DIRECTORY_SEPARATOR . 'module.xml');
-        $this->fillModuleXml($modulePath, $moduleName, $dependencies);
+        $this->fillModuleXml($file, $moduleName, $dependencies);
         $this->writeToFile(
             $modulePath . DIRECTORY_SEPARATOR . 'registration.php',
             $registrationFileContent,

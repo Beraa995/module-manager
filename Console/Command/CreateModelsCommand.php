@@ -84,8 +84,7 @@ class CreateModelsCommand extends AbstractModuleCommand
     }
 
     /**
-     * @param InputInterface $input
-     * @param OutputInterface $output
+     * @inheridoc
      */
     protected function interact(InputInterface $input, OutputInterface $output)
     {
@@ -121,7 +120,10 @@ class CreateModelsCommand extends AbstractModuleCommand
         }
 
         if (!$input->getOption(self::MODEL_EXTENSIBLE)) {
-            $confirmationQuestion = new ConfirmationQuestion('<question>Is the model extensible? (y/n)</question> ', false);
+            $confirmationQuestion = new ConfirmationQuestion(
+                '<question>Is the model extensible? (y/n)</question> ',
+                false
+            );
 
             $input->setOption(
                 self::MODEL_EXTENSIBLE,
@@ -130,7 +132,10 @@ class CreateModelsCommand extends AbstractModuleCommand
         }
 
         if (!$input->getOption(self::MODEL_IDENTITY)) {
-            $confirmationQuestion = new ConfirmationQuestion('<question>Should model implement Identity interface? (y/n)</question> ', false);
+            $confirmationQuestion = new ConfirmationQuestion(
+                '<question>Should model implement Identity interface? (y/n)</question> ',
+                false
+            );
 
             $input->setOption(
                 self::MODEL_IDENTITY,

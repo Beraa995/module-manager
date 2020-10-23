@@ -2,6 +2,8 @@
 namespace Mistlanto\ModuleManager\Console\Command;
 
 use DOMException;
+use Exception;
+use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\App\Utility\Files;
 use Magento\Framework\Filesystem\Directory\ReadFactory as DirectoryReadFactory;
 use Magento\Framework\Filesystem\Directory\WriteFactory as DirectoryWriteFactory;
@@ -59,6 +61,7 @@ class CreatePluginCommand extends AbstractModuleCommand
      * @param FileWriteFactory $fileWrite
      * @param Files $filesUtility
      * @param File $file
+     * @param ScopeConfigInterface $scopeConfig
      * @param CreateConfigurationFileCommand $configurationFileCommand
      * @param string|null $name
      */
@@ -73,6 +76,7 @@ class CreatePluginCommand extends AbstractModuleCommand
         FileWriteFactory $fileWrite,
         Files $filesUtility,
         File $file,
+        ScopeConfigInterface $scopeConfig,
         CreateConfigurationFileCommand $configurationFileCommand,
         string $name = null
     ) {
@@ -87,6 +91,7 @@ class CreatePluginCommand extends AbstractModuleCommand
             $fileWrite,
             $filesUtility,
             $file,
+            $scopeConfig,
             $name
         );
         $this->configurationFileCommand = $configurationFileCommand;
@@ -98,7 +103,7 @@ class CreatePluginCommand extends AbstractModuleCommand
     protected function configure()
     {
         $this->setName('mistlanto:plugin:create')
-            ->setDescription('Creates a plugin in di.xml');
+            ->setDescription('Creates a plugin');
 
         parent::configure();
     }
@@ -149,8 +154,7 @@ class CreatePluginCommand extends AbstractModuleCommand
     }
 
     /**
-     * @param InputInterface $input
-     * @param OutputInterface $output
+     * @inheridoc
      */
     protected function interact(InputInterface $input, OutputInterface $output)
     {
@@ -323,7 +327,7 @@ class CreatePluginCommand extends AbstractModuleCommand
      */
     protected function createPluginInXml($module, $pluginClass, $targetClass, $name)
     {
-        //@TODO add sort and disabled attributes
+        //@TODO Add sort and disabled attributes
         $pluginContent = [
             'type' => [
                 '_attribute' => [
@@ -350,7 +354,7 @@ class CreatePluginCommand extends AbstractModuleCommand
 
         try {
             $this->configurationFileCommand->run($input, $this->output);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->output->writeln('<error>' . $e->getMessage() . '</error>');
         }
     }

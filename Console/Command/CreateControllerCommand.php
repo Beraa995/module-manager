@@ -98,8 +98,7 @@ class CreateControllerCommand extends AbstractModuleCommand
     }
 
     /**
-     * @param InputInterface $input
-     * @param OutputInterface $output
+     * @inheridoc
      */
     protected function interact(InputInterface $input, OutputInterface $output)
     {
@@ -149,7 +148,9 @@ class CreateControllerCommand extends AbstractModuleCommand
     {
         return $this->createFunctionString(
             self::PUBLIC_FUNCTION,
-            'execute'
+            'execute',
+            '',
+            'return $this->resultFactory->create(\Magento\Framework\Controller\ResultFactory::TYPE_PAGE);'
         );
     }
 

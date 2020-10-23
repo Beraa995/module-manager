@@ -2,6 +2,7 @@
 namespace Mistlanto\ModuleManager\Console\Command;
 
 use DOMException;
+use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\App\Utility\Files;
 use Magento\Framework\Exception\FileSystemException;
 use Magento\Framework\Exception\LocalizedException;
@@ -16,6 +17,7 @@ use Magento\Framework\Module\Dir;
 use Magento\Framework\Xml\Generator;
 use Magento\Framework\Xml\Parser;
 use ReflectionClass;
+use ReflectionException;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Helper\QuestionHelper;
 use Symfony\Component\Console\Input\InputInterface;
@@ -29,6 +31,8 @@ use Symfony\Component\Console\Question\Question;
  */
 abstract class AbstractModuleCommand extends Command
 {
+    const XML_PATH_SECURE_BASE_LINK_URL = 'web/secure/base_link_url';
+    const XML_PATH_UNSECURE_BASE_LINK_URL = 'web/unsecure/base_link_url';
     const CODE_DIRECTORY = BP . DIRECTORY_SEPARATOR . 'app' . DIRECTORY_SEPARATOR . 'code' . DIRECTORY_SEPARATOR;
     const MODULE_NAME = 'Mistlanto_ModuleManager';
     const CLASS_FILE_NAME = 'classBase';
@@ -51,6 +55,7 @@ abstract class AbstractModuleCommand extends Command
         'frontend',
         'adminhtml'
     ];
+    const BASE_AREA = 'base';
 
     /**
      * Command option params
@@ -63,11 +68,12 @@ abstract class AbstractModuleCommand extends Command
     const MESSAGE_DIRECTORY_CREATED = 'Directory %1 is successfully created!';
     const MESSAGE_FILE_FILLED_WITH_THE_CONTENT = 'Content is added to the %1!';
     const MESSAGE_FILE_FILLED_WITH_THE_CONTENT_ERROR = 'Content can\'t be added to the %1!';
-    const MESSAGE_FILE_FILLED_WITH_THE_CONTENT_NONE = 'No content is added to the %1!';
+    const MESSAGE_FILE_FILLED_WITH_THE_CONTENT_NONE = 'No additional content nodes are added to the %1!';
     const MESSAGE_FILE_CREATED = 'File %1 is successfully created!';
     const MESSAGE_FILE_EXIST = 'File %1 already exist!';
     const MESSAGE_MODULE_NOT_EXIST = 'Module doesn\'t exist in code directory!';
     const MESSAGE_MODULE_MISSING = 'Module name is missing!';
+    const MESSAGE_XML_EXIST = 'XML file already exists. Skipping generate process!';
 
     /**
      * XML constants
@@ -127,6 +133,11 @@ abstract class AbstractModuleCommand extends Command
     protected $file;
 
     /**
+     * @var ScopeConfigInterface
+     */
+    protected $scopeConfig;
+
+    /**
      * CreateModuleCommand constructor.
      * @param DirectoryWriteFactory $directoryWriteFactory
      * @param DirectoryReadFactory $directoryReadFactory
@@ -138,6 +149,7 @@ abstract class AbstractModuleCommand extends Command
      * @param FileWriteFactory $fileWrite
      * @param Files $filesUtility
      * @param File $file
+     * @param ScopeConfigInterface $scopeConfig
      * @param string|null $name
      */
     public function __construct(
@@ -151,6 +163,7 @@ abstract class AbstractModuleCommand extends Command
         FileWriteFactory $fileWrite,
         Files $filesUtility,
         File $file,
+        ScopeConfigInterface $scopeConfig,
         string $name = null
     ) {
         parent::__construct($name);
@@ -164,6 +177,7 @@ abstract class AbstractModuleCommand extends Command
         $this->filesUtility = $filesUtility;
         $this->xmlParser = $xmlParser;
         $this->file = $file;
+        $this->scopeConfig = $scopeConfig;
     }
 
     /**
@@ -375,7 +389,7 @@ abstract class AbstractModuleCommand extends Command
             }
 
             return $methodData;
-        } catch (\ReflectionException $e) {
+        } catch (ReflectionException $e) {
             $this->output->writeln('<error>' . $e->getMessage() . '<error>');
         }
 
@@ -418,8 +432,6 @@ abstract class AbstractModuleCommand extends Command
 
     /**
      * @inheridoc
-     * @param InputInterface $input
-     * @param OutputInterface $output
      */
     protected function interact(InputInterface $input, OutputInterface $output)
     {
@@ -674,12 +686,12 @@ abstract class AbstractModuleCommand extends Command
     /**
      * Returns module directory path
      * @param string $folderPath
-     * @param string $moduleDir
+     * @param string $moduleName
      * @return string
      */
-    protected function getModuleDir($folderPath = '', $moduleDir = self::MODULE_NAME)
+    protected function getModuleDir($folderPath = '', $moduleName = self::MODULE_NAME)
     {
-        return $this->moduleReader->getDir($moduleDir) . DIRECTORY_SEPARATOR . $folderPath;
+        return $this->moduleReader->getDir($moduleName) . DIRECTORY_SEPARATOR . $folderPath;
     }
 
     /**
@@ -707,13 +719,18 @@ abstract class AbstractModuleCommand extends Command
     protected function generateXml($filePath, $array, $isCodeDir = true, $indexedArrayItem = 'item')
     {
         try {
-            $this->xmlGenerator->setIndexedArrayItemName($indexedArrayItem);
-            $this->xmlGenerator->arrayToXml($array);
+            if (!$this->file->fileExists($filePath)) {
+                $this->createFile($filePath);
+                $this->xmlGenerator->setIndexedArrayItemName($indexedArrayItem);
+                $this->xmlGenerator->arrayToXml($array);
 
-            if ($isCodeDir) {
-                $this->xmlGenerator->save(self::CODE_DIRECTORY . $filePath);
+                if ($isCodeDir) {
+                    $this->xmlGenerator->save(self::CODE_DIRECTORY . $filePath);
+                } else {
+                    $this->xmlGenerator->save($filePath);
+                }
             } else {
-                $this->xmlGenerator->save($filePath);
+                $this->output->writeln(self::MESSAGE_XML_EXIST);
             }
         } catch (DOMException $e) {
             $this->output->writeln('<error>' . $e->getMessage() . '</error>');

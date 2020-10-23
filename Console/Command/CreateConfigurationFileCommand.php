@@ -2,8 +2,6 @@
 namespace Mistlanto\ModuleManager\Console\Command;
 
 use DOMException;
-use Magento\Framework\Exception\FileSystemException;
-use Magento\Framework\Exception\ValidatorException;
 use Symfony\Component\Console\Helper\QuestionHelper;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -69,8 +67,7 @@ class CreateConfigurationFileCommand extends AbstractModuleCommand
     }
 
     /**
-     * @param InputInterface $input
-     * @param OutputInterface $output
+     * @inheridoc
      */
     protected function interact(InputInterface $input, OutputInterface $output)
     {
@@ -98,10 +95,23 @@ class CreateConfigurationFileCommand extends AbstractModuleCommand
             }
 
             if (count($configData) > 1) {
-                $this->output->writeln(__('You have to select one of the following areas: %1', implode(',', $configData)));
+                $this->output->writeln(
+                    __(
+                        'You have to select one of the following areas: %1',
+                        implode(',', $configData)
+                    )
+                );
 
-                $question = new Question('<question>' . $file . ' configuration file area:</question> ', '');
-                $area = $questionHelper->ask($input, $output, $question);
+                $area = $input->getOption(self::CONFIGURATION_FILE_AREA_NAME);
+
+                $question = new Question(
+                    '<question>' . $file . ' configuration file area:</question> ',
+                    ''
+                );
+
+                if (!$area) {
+                    $area = $questionHelper->ask($input, $output, $question);
+                }
 
                 $input->setOption(
                     self::CONFIGURATION_FILE_AREA_NAME,
@@ -131,21 +141,17 @@ class CreateConfigurationFileCommand extends AbstractModuleCommand
         $moduleDir = $this->getModuleDir($areaPath, $moduleName);
         $filePath = $moduleDir . DIRECTORY_SEPARATOR . $file;
 
-        if (!$this->file->fileExists($filePath)) {
-            $this->createFile($filePath);
-            $this->generateXml(
-                $filePath,
-                [$mainNode => [
-                    '_attribute' => [
-                        self::MAIN_XML_ATTRIBUTE_NAME => self::MAIN_XML_ATTRIBUTE_VALUE,
-                        self::MODULE_XML_SCHEMA_ATTRIBUTE => $urn[0] ?? '',
-                    ],
-                    '_value' => null,
-                ]],
-                false
-            );
-        }
-
+        $this->generateXml(
+            $filePath,
+            [$mainNode => [
+                '_attribute' => [
+                    self::MAIN_XML_ATTRIBUTE_NAME => self::MAIN_XML_ATTRIBUTE_VALUE,
+                    self::MODULE_XML_SCHEMA_ATTRIBUTE => $urn[0] ?? '',
+                ],
+                '_value' => null,
+            ]],
+            false
+        );
         $this->fillXmlFile($filePath, $content);
     }
 
@@ -206,6 +212,8 @@ class CreateConfigurationFileCommand extends AbstractModuleCommand
                     $output->writeln('<error>' . __(self::MESSAGE_INVALID_AREA) . '</error>');
                 }
             }
+        } else {
+            $output->writeln('<error>' . __(self::MESSAGE_CONFIGURATION_INVALID) . '</error>');
         }
     }
 }

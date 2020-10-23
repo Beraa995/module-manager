@@ -9,6 +9,8 @@
                 <item name="create-route" xsi:type="object">Mistlanto\ModuleManager\Console\Command\CreateRouteCommand</item>
                 <item name="create-plugin" xsi:type="object">Mistlanto\ModuleManager\Console\Command\CreatePluginCommand</item>
                 <item name="create-crud" xsi:type="object">Mistlanto\ModuleManager\Console\Command\CreateModelsCommand</item>
+                <item name="create-layout-handle" xsi:type="object">Mistlanto\ModuleManager\Console\Command\CreateLayoutHandleCommand</item>
+                <item name="create-route-full" xsi:type="object">Mistlanto\ModuleManager\Console\Command\CreateRouteFullCommand</item>
             </argument>
         </arguments>
     </type>

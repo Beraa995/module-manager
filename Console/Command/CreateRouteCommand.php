@@ -2,6 +2,8 @@
 namespace Mistlanto\ModuleManager\Console\Command;
 
 use DOMException;
+use Exception;
+use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\App\Utility\Files;
 use Magento\Framework\Filesystem\Directory\ReadFactory as DirectoryReadFactory;
 use Magento\Framework\Filesystem\Directory\WriteFactory as DirectoryWriteFactory;
@@ -66,6 +68,7 @@ class CreateRouteCommand extends AbstractModuleCommand
      * @param FileWriteFactory $fileWrite
      * @param Files $filesUtility
      * @param File $file
+     * @param ScopeConfigInterface $scopeConfig
      * @param CreateConfigurationFileCommand $configurationFileCommand
      * @param string|null $name
      */
@@ -80,6 +83,7 @@ class CreateRouteCommand extends AbstractModuleCommand
         FileWriteFactory $fileWrite,
         Files $filesUtility,
         File $file,
+        ScopeConfigInterface $scopeConfig,
         CreateConfigurationFileCommand $configurationFileCommand,
         string $name = null
     ) {
@@ -94,6 +98,7 @@ class CreateRouteCommand extends AbstractModuleCommand
             $fileWrite,
             $filesUtility,
             $file,
+            $scopeConfig,
             $name
         );
         $this->configurationFileCommand = $configurationFileCommand;
@@ -143,8 +148,7 @@ class CreateRouteCommand extends AbstractModuleCommand
     }
 
     /**
-     * @param InputInterface $input
-     * @param OutputInterface $output
+     * @inheridoc
      */
     protected function interact(InputInterface $input, OutputInterface $output)
     {
@@ -265,7 +269,7 @@ class CreateRouteCommand extends AbstractModuleCommand
 
         try {
             $this->configurationFileCommand->run($input, $this->output);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->output->writeln('<error>' . $e->getMessage() . '</error>');
         }
     }
