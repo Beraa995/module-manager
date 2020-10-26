@@ -94,7 +94,8 @@ class CreateConfigurationFileCommand extends AbstractModuleCommand
                 }
             }
 
-            if (count($configData) > 1) {
+            if (count($configData) > 1 &&
+                !$input->getOption(self::CONFIGURATION_FILE_AREA_NAME)) {
                 $this->output->writeln(
                     __(
                         'You have to select one of the following areas: %1',
@@ -102,16 +103,8 @@ class CreateConfigurationFileCommand extends AbstractModuleCommand
                     )
                 );
 
-                $area = $input->getOption(self::CONFIGURATION_FILE_AREA_NAME);
-
-                $question = new Question(
-                    '<question>' . $file . ' configuration file area:</question> ',
-                    ''
-                );
-
-                if (!$area) {
-                    $area = $questionHelper->ask($input, $output, $question);
-                }
+                $question = new Question('<question>' . $file . ' configuration file area:</question> ');
+                $area = $questionHelper->ask($input, $output, $question);
 
                 $input->setOption(
                     self::CONFIGURATION_FILE_AREA_NAME,

@@ -11,6 +11,7 @@
                 <item name="create-crud" xsi:type="object">Mistlanto\ModuleManager\Console\Command\CreateModelsCommand</item>
                 <item name="create-layout-handle" xsi:type="object">Mistlanto\ModuleManager\Console\Command\CreateLayoutHandleCommand</item>
                 <item name="create-route-full" xsi:type="object">Mistlanto\ModuleManager\Console\Command\CreateRouteFullCommand</item>
+                <item name="create-observer" xsi:type="object">Mistlanto\ModuleManager\Console\Command\CreateObserverCommand</item>
             </argument>
         </arguments>
     </type>

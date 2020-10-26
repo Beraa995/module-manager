@@ -1,7 +1,6 @@
 <?php
 namespace Mistlanto\ModuleManager\Console\Command;
 
-use DOMException;
 use Exception;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\App\Utility\Files;
@@ -19,6 +18,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\ConsoleOutput;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Question\ConfirmationQuestion;
 use Symfony\Component\Console\Question\Question;
 
 class CreatePluginCommand extends AbstractModuleCommand
@@ -163,7 +163,7 @@ class CreatePluginCommand extends AbstractModuleCommand
         $questionHelper = $this->getHelper('question');
 
         if (!$input->getOption(self::PLUGIN_CLASS)) {
-            $question = new Question('<question>Plugin class:</question> ', '');
+            $question = new Question('<question>Plugin class in Plugin folder: (example: Mistlanto/PluginClass)</question> ');
 
             $input->setOption(
                 self::PLUGIN_CLASS,
@@ -172,7 +172,7 @@ class CreatePluginCommand extends AbstractModuleCommand
         }
 
         if (!$input->getOption(self::TARGET_CLASS)) {
-            $question = new Question('<question>Target class:</question> ', '');
+            $question = new Question('<question>Target class:</question> ');
 
             $input->setOption(
                 self::TARGET_CLASS,
@@ -181,7 +181,7 @@ class CreatePluginCommand extends AbstractModuleCommand
         }
 
         if (!$input->getOption(self::TARGET_METHOD)) {
-            $question = new Question('<question>Target method:</question> ', '');
+            $question = new Question('<question>Target method:</question> ');
 
             $input->setOption(
                 self::TARGET_METHOD,
@@ -190,11 +190,32 @@ class CreatePluginCommand extends AbstractModuleCommand
         }
 
         if (!$input->getOption(self::PLUGIN_NAME)) {
-            $question = new Question('<question>Plugin name:</question> ', '');
+            $question = new Question('<question>Plugin name:</question> ');
 
             $input->setOption(
                 self::PLUGIN_NAME,
                 $questionHelper->ask($input, $output, $question)
+            );
+        }
+
+        if (!$input->getOption(self::PLUGIN_SORT)) {
+            $question = new Question('<question>Plugin sort number: (Default: No sort)</question> ');
+
+            $input->setOption(
+                self::PLUGIN_SORT,
+                $questionHelper->ask($input, $output, $question)
+            );
+        }
+
+        if (!$input->getOption(self::PLUGIN_DISABLED)) {
+            $confirmationQuestion = new ConfirmationQuestion(
+                '<question>Is plugin disabled? (y/n) (Default: n)</question> ',
+                false
+            );
+
+            $input->setOption(
+                self::PLUGIN_DISABLED,
+                $questionHelper->ask($input, $output, $confirmationQuestion)
             );
         }
     }
@@ -214,6 +235,8 @@ class CreatePluginCommand extends AbstractModuleCommand
         $targetClass = $input->getOption(self::TARGET_CLASS);
         $targetMethod = $input->getOption(self::TARGET_METHOD);
         $pluginName = $input->getOption(self::PLUGIN_NAME);
+        $pluginSort = $input->getOption(self::PLUGIN_SORT);
+        $pluginDisabled = $input->getOption(self::PLUGIN_DISABLED);
 
         if (!$pluginClass) {
             $output->writeln('<error>' . __(self::MESSAGE_INVALID_PLUGIN_CLASS) . '</error>');
@@ -246,30 +269,31 @@ class CreatePluginCommand extends AbstractModuleCommand
             return;
         }
 
-        $pluginClass = str_replace('/', '\\', $pluginClass);
+        $pluginClass = trim(str_replace('\\', '/', $pluginClass), '/');
         $targetClass = str_replace('/', '\\', $targetClass);
+        $moduleDirInCode = $this->getModuleDirInCode($this->getModuleDir('Plugin', $moduleInput));
+        $pluginClass = $moduleDirInCode . DIRECTORY_SEPARATOR . $pluginClass;
 
-        $this->createPluginInXml($moduleInput, $pluginClass, $targetClass, $pluginName);
-        $this->createPluginClass($moduleInput, $pluginClass, $targetClass, $targetMethod, $methodData);
+        $this->createPluginInXml($moduleInput, $pluginClass, $targetClass, $pluginName, $pluginSort, $pluginDisabled);
+        $this->createPluginClass($pluginClass, $targetClass, $targetMethod, $methodData);
     }
 
     /**
      * Creates plugin class
-     * @param $module
-     * @param $pluginClass
-     * @param $targetClass
-     * @param $targetMethod
-     * @param $methodData
+     * @param string $pluginClass
+     * @param string $targetClass
+     * @param string $targetMethod
+     * @param array $methodData
      */
-    protected function createPluginClass($module, $pluginClass, $targetClass, $targetMethod, $methodData)
+    protected function createPluginClass($pluginClass, $targetClass, $targetMethod, $methodData)
     {
         $classSplit = $this->parseClassString($pluginClass);
         $functions = $this->createPluginFunctions($targetClass, $targetMethod, $methodData);
 
         $this->createClass(
-            str_replace('\\', '/', trim($pluginClass, '\\')) . '.php',
+            $pluginClass . '.php',
             $classSplit['ns'] ?? '',
-            'use ' . trim($targetClass, '\\') . ';',
+            ['use ' . trim($targetClass, '\\') . ';'],
             $classSplit['className'] ?? '',
             '',
             '',
@@ -281,9 +305,9 @@ class CreatePluginCommand extends AbstractModuleCommand
 
     /**
      * Returns functions for the plugin class
-     * @param $targetClass
-     * @param $targetMethod
-     * @param $methodData
+     * @param string $targetClass
+     * @param string $targetMethod
+     * @param array $methodData
      * @return array
      */
     protected function createPluginFunctions($targetClass, $targetMethod, $methodData)
@@ -300,19 +324,22 @@ class CreatePluginCommand extends AbstractModuleCommand
         $functions[]= $this->createFunctionString(
             self::PUBLIC_FUNCTION,
             'before' . $this->firstUpper($targetMethod),
-            $subjectArgument . implode(', ', $parameters)
+            $subjectArgument . implode(', ', $parameters),
+            'return [' . implode(', ', $parameters) . '];'
         );
 
         $functions[]= $this->createFunctionString(
             self::PUBLIC_FUNCTION,
             'around' . $this->firstUpper($targetMethod),
-            $subjectArgument . '\\Closure $proceed, ' . implode(', ', $parameters)
+            $subjectArgument . '\\Closure $proceed, ' . implode(', ', $parameters),
+            'return $proceed();'
         );
 
         $functions[]= $this->createFunctionString(
             self::PUBLIC_FUNCTION,
             'after' . $this->firstUpper($targetMethod),
-            $subjectArgument . '$result, ' . implode(', ', $parameters)
+            $subjectArgument . '$result, ' . implode(', ', $parameters),
+            'return $result;'
         );
 
         return $functions;
@@ -324,10 +351,11 @@ class CreatePluginCommand extends AbstractModuleCommand
      * @param string $pluginClass
      * @param string $targetClass
      * @param string $name
+     * @param string|int $pluginSort
+     * @param bool $pluginDisabled
      */
-    protected function createPluginInXml($module, $pluginClass, $targetClass, $name)
+    protected function createPluginInXml($module, $pluginClass, $targetClass, $name, $pluginSort, $pluginDisabled)
     {
-        //@TODO Add sort and disabled attributes
         $pluginContent = [
             'type' => [
                 '_attribute' => [
@@ -337,13 +365,21 @@ class CreatePluginCommand extends AbstractModuleCommand
                     'plugin' => [
                         '_attribute' => [
                             'name' => $name,
-                            'type' => trim($pluginClass, '\\')
+                            'type' => trim(str_replace('/', '\\', $pluginClass), '\\')
                         ],
                         '_value' => []
                     ]
                 ]
             ],
         ];
+
+        if (is_numeric($pluginSort)) {
+            $pluginContent['type']['_value']['plugin']['_attribute']['sortOrder'] = $pluginSort;
+        }
+
+        if ($pluginDisabled) {
+            $pluginContent['type']['_value']['plugin']['_attribute']['disabled'] = 'true';
+        }
 
         $input = new ArrayInput([
             '--' . self::MODULE_OPTION_NAME => $module,

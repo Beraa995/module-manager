@@ -107,10 +107,7 @@ class CreateControllerCommand extends AbstractModuleCommand
         $questionHelper = $this->getHelper('question');
 
         if (!$input->getOption(self::CONTROLLER_AREA)) {
-            $question = new Question(
-                '<question>Controller area: (' . implode(',', self::AREAS) . ')</question> ',
-                ''
-            );
+            $question = new Question('<question>Controller area: (' . implode(',', self::AREAS) . ')</question> ');
 
             $input->setOption(
                 self::CONTROLLER_AREA,
@@ -119,7 +116,10 @@ class CreateControllerCommand extends AbstractModuleCommand
         }
 
         if (!$input->getOption(self::CONTROLLER_PATH)) {
-            $question = new Question('<question>Controller path: (example: Mistlanto/Index)</question> ', '');
+            $question = new Question(
+                '<question>Controller path: (default: Index/Index)</question> ',
+                'Index/Index'
+            );
 
             $input->setOption(
                 self::CONTROLLER_PATH,
@@ -129,8 +129,7 @@ class CreateControllerCommand extends AbstractModuleCommand
 
         if (!$input->getOption(self::CONTROLLER_REQUEST)) {
             $question = new Question(
-                '<question>Comma separated requests: (' . implode(',', self::REQUEST) . ')</question> ',
-                ''
+                '<question>Comma separated requests: (' . implode(',', self::REQUEST) . ')</question> '
             );
 
             $input->setOption(
@@ -168,17 +167,17 @@ class CreateControllerCommand extends AbstractModuleCommand
         $classSplit = null;
         $parent = null;
         $implementedInterfaces = [];
-        $useNamespaces = '';
+        $imports = [];
 
         if (in_array($controllerArea, self::AREAS)) {
             if ($controllerArea !== 'frontend') {
                 $moduleDir = $this->getModuleDir('Controller/Adminhtml', $module);
                 $parent = self::CLASSES['adminhtml']['name'];
-                $useNamespaces .= self::CLASSES['adminhtml']['useClass'];
+                $imports[]= self::CLASSES['adminhtml']['useClass'];
             } else {
                 $moduleDir = $this->getModuleDir('Controller', $module);
                 $parent = self::CLASSES['frontend']['name'];
-                $useNamespaces .= self::CLASSES['frontend']['useClass'];
+                $imports[]= self::CLASSES['frontend']['useClass'];
             }
         }
 
@@ -189,8 +188,7 @@ class CreateControllerCommand extends AbstractModuleCommand
                 $lowCaseName = trim(strtolower($request));
 
                 if (isset(self::CLASSES[$lowCaseName])) {
-                    $useNamespaces .= "\n";
-                    $useNamespaces .= self::CLASSES[$lowCaseName]['useClass'];
+                    $imports[]= self::CLASSES[$lowCaseName]['useClass'];
                     $implementedInterfaces[] = self::CLASSES[$lowCaseName]['name'];
                 }
             }
@@ -210,7 +208,7 @@ class CreateControllerCommand extends AbstractModuleCommand
         $this->createClass(
             $file,
             $classSplit['ns'] ?? '',
-            $useNamespaces,
+            $imports,
             $classSplit['className'] ?? '',
             $parent,
             !empty($implementedInterfaces)
@@ -229,6 +227,7 @@ class CreateControllerCommand extends AbstractModuleCommand
      */
     public function execute(InputInterface $input, OutputInterface $output)
     {
+        //@TODO Add resource constant for admin controller
         parent::execute($input, $output);
         $moduleInput = $input->getOption(self::MODULE_OPTION_NAME);
         $controllerPath = $input->getOption(self::CONTROLLER_PATH);
@@ -239,6 +238,8 @@ class CreateControllerCommand extends AbstractModuleCommand
             $output->writeln('<error>' . __(self::MESSAGE_INVALID_CONTROLLER) . '</error>');
             return;
         }
+
+        $controllerPath = trim(str_replace('\\', '/', $controllerPath), '/');
 
         $this->createController($moduleInput, $controllerPath, $controllerArea, $controllerRequests);
     }

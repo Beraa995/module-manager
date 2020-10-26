@@ -187,7 +187,7 @@ class CreateModelsCommand extends AbstractModuleCommand
         $this->createClass(
             $class . '.php',
             $classSplit['ns'] ?? '',
-            'use ' . trim($parent, '\\') . ';',
+            ['use ' . trim($parent, '\\') . ';'],
             $classSplit['className'] ?? '',
             $parentClassSplit['className'] ?? '',
             '',
@@ -211,12 +211,12 @@ class CreateModelsCommand extends AbstractModuleCommand
         $parentClassSplit = $this->parseClassString($parent);
         $functions = $this->createCollectionFunctions($modelName);
         $properties = $this->createCollectionProperties($dbName);
-        $uses = $this->createCollectionUses($parent, $modulePathInCode, $modelName);
+        $imports = $this->createCollectionImports($parent, $modulePathInCode, $modelName);
 
         $this->createClass(
             $class . '.php',
             $classSplit['ns'] ?? '',
-            $uses,
+            $imports,
             $classSplit['className'] ?? '',
             $parentClassSplit['className'] ?? '',
             '',
@@ -231,21 +231,19 @@ class CreateModelsCommand extends AbstractModuleCommand
      * @param string $parent
      * @param string $modulePathInCode
      * @param string $modelName
-     * @return string
+     * @return array
      */
-    protected function createCollectionUses($parent, $modulePathInCode, $modelName)
+    protected function createCollectionImports($parent, $modulePathInCode, $modelName)
     {
         $pathTrimmed = str_replace('/', '\\', trim($modulePathInCode, '\\'));
         $modelPath = $pathTrimmed . '\\' . $modelName;
         $resourceModelPath = $pathTrimmed . '\\ResourceModel\\' . $modelName;
 
-        $uses = [
+        return [
             'use ' . trim($parent, '\\') . ';',
             'use ' . $modelPath . ' as ' . $modelName . 'Model;',
             'use ' . $resourceModelPath . ' as ' . $modelName . 'Resource;'
         ];
-
-        return implode("\n", $uses);
     }
 
     /**
@@ -290,7 +288,7 @@ class CreateModelsCommand extends AbstractModuleCommand
         $parent = $isExtensible ? self::MODEL_PARENT_EXTENSIBLE : self::MODEL_PARENT;
         $classSplit = $this->parseClassString($class);
         $parentClassSplit = $this->parseClassString($parent);
-        $uses = $this->createModelUses($parent, $isExtensible, $isIdentity);
+        $imports = $this->createModelImports($parent, $isExtensible, $isIdentity);
         $functions = $this->createModelFunctions($modelName, $isIdentity);
         $properties = $this->createModelProperties($dbName, $isIdentity);
         $implements = $this->createModelImplements($isIdentity, $isExtensible);
@@ -298,7 +296,7 @@ class CreateModelsCommand extends AbstractModuleCommand
         $this->createClass(
             $class . '.php',
             $classSplit['ns'] ?? '',
-            $uses,
+            $imports,
             $classSplit['className'] ?? '',
             $parentClassSplit['className'] ?? '',
             $implements,
@@ -313,20 +311,20 @@ class CreateModelsCommand extends AbstractModuleCommand
      * @param string $parent
      * @param string $isExtensible
      * @param string $isIdentity
-     * @return string
+     * @return array
      */
-    protected function createModelUses($parent, $isExtensible, $isIdentity)
+    protected function createModelImports($parent, $isExtensible, $isIdentity)
     {
-        $uses = ['use ' . trim($parent, '\\') . ';'];
+        $imports = ['use ' . trim($parent, '\\') . ';'];
         if ($isExtensible) {
-            $uses[]= 'use ' . trim(self::MODEL_EXTENSIBLE_INTERFACE, '\\') . ';';
+            $imports[]= 'use ' . trim(self::MODEL_EXTENSIBLE_INTERFACE, '\\') . ';';
         }
 
         if ($isIdentity) {
-            $uses[]= 'use ' . trim(self::MODEL_IDENTITY_INTERFACE, '\\') . ';';
+            $imports[]= 'use ' . trim(self::MODEL_IDENTITY_INTERFACE, '\\') . ';';
         }
 
-        return implode("\n", $uses);
+        return $imports;
     }
 
     /**

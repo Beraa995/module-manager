@@ -40,7 +40,6 @@ class CreateRouteFullCommand extends AbstractModuleCommand
     const MESSAGE_INVALID_ROUTE_ID = 'Invalid route id!';
     const MESSAGE_INVALID_ROUTE_AREA = 'Invalid route area!';
     const MESSAGE_INVALID_ROUTE_FRONT_NAME = 'Invalid route front name!';
-    const MESSAGE_VISIT_URL = 'You can now test your route: %1';
 
     /**
      * @var CreateRouteCommand
@@ -171,7 +170,7 @@ class CreateRouteFullCommand extends AbstractModuleCommand
         }
 
         if (!$input->getOption(self::FULL_ROUTE_ID)) {
-            $question = new Question('<question>Route id:</question> ', '');
+            $question = new Question('<question>Route id:</question> ');
 
             $input->setOption(
                 self::FULL_ROUTE_ID,
@@ -180,10 +179,7 @@ class CreateRouteFullCommand extends AbstractModuleCommand
         }
 
         if (!$input->getOption(self::FULL_ROUTE_FRONT_NAME)) {
-            $question = new Question(
-                '<question>Route front name:</question> ',
-                ''
-            );
+            $question = new Question('<question>Route front name:</question> ');
 
             $input->setOption(
                 self::FULL_ROUTE_FRONT_NAME,
@@ -237,15 +233,6 @@ class CreateRouteFullCommand extends AbstractModuleCommand
         $this->createController($moduleInput, $routeArea);
         $this->createRoute($moduleInput, $routeArea, $routeId, $routeFrontName);
         $this->createLayoutHandle($moduleInput, $routeArea, $routeId);
-        //@TODO Render message also for admin
-        if ($routeArea === 'frontend') {
-            $this->output->writeln(
-                '<info>' . __(
-                    self::MESSAGE_VISIT_URL,
-                    $this->scopeConfig->getValue(self::XML_PATH_SECURE_BASE_LINK_URL) . $routeFrontName
-                ) . '</info>'
-            );
-        }
     }
 
     /**

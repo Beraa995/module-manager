@@ -68,12 +68,12 @@ abstract class AbstractModuleCommand extends Command
     const MESSAGE_DIRECTORY_CREATED = 'Directory %1 is successfully created!';
     const MESSAGE_FILE_FILLED_WITH_THE_CONTENT = 'Content is added to the %1!';
     const MESSAGE_FILE_FILLED_WITH_THE_CONTENT_ERROR = 'Content can\'t be added to the %1!';
-    const MESSAGE_FILE_FILLED_WITH_THE_CONTENT_NONE = 'No additional content nodes are added to the %1!';
+    const MESSAGE_FILE_FILLED_WITH_THE_CONTENT_NONE = 'No additional content is added to the %1!';
     const MESSAGE_FILE_CREATED = 'File %1 is successfully created!';
-    const MESSAGE_FILE_EXIST = 'File %1 already exist!';
+    const MESSAGE_FILE_EXIST = 'Skipping file creation. File %1 already exist!';
     const MESSAGE_MODULE_NOT_EXIST = 'Module doesn\'t exist in code directory!';
     const MESSAGE_MODULE_MISSING = 'Module name is missing!';
-    const MESSAGE_XML_EXIST = 'XML file already exists. Skipping generate process!';
+    const MESSAGE_XML_EXIST = 'Skipping XML generation. File %1 already exists!';
 
     /**
      * XML constants
@@ -276,40 +276,53 @@ abstract class AbstractModuleCommand extends Command
             return;
         }
 
-        // Current routes.xml content
+        // Current xml content
         $currentRoutesContent = $this->xmlParser->load($file)->getDom();
-        $childNodes = $currentRoutesContent->childNodes;
+        $childNodes = $currentRoutesContent->childNodes->item(0)->childNodes;
         $destinationNode = null;
         // XML created from the $content array
         $newDom = $this->xmlGenerator->arrayToXml($content)->getDom();
         $routerDomElement = $newDom->getElementsByTagName($firstNode[0])->item(0);
 
         $hasNodes = true;
+        $tagName = '';
 
         while ($hasNodes) {
             foreach ($childNodes as $node) {
+                if ($node->nodeType === XML_TEXT_NODE) {
+                    continue;
+                } else {
+                    $tagName = $node->tagName;
+                }
+
                 if ($this->compareNodes($node, $routerDomElement)) {
                     $routerDomElement = $routerDomElement->firstChild;
                     $destinationNode = $node;
                 } else {
                     $childNodes = [];
                 }
+            }
 
-                if ($node->nodeType === XML_ELEMENT_NODE) {
-                    $childNodes = $currentRoutesContent->getElementsByTagName($node->tagName)->item(0)->childNodes;
-                }
+            $nextElements = $currentRoutesContent->getElementsByTagName($tagName)->item(0);
 
-                if (!count($childNodes)) {
-                    $hasNodes = false;
-                }
+            //@TODO Mention 7.2 in composer
+            if ($nextElements && $nextElements->childNodes->count()) {
+                $childNodes = $nextElements->childNodes;
+            } else {
+                $hasNodes = false;
             }
         }
 
-        if ($destinationNode !== null) {
-            $destinationNode->appendChild($currentRoutesContent->importNode($routerDomElement, true));
+        if ($routerDomElement) {
+            if ($destinationNode !== null) {
+                $destinationNode->appendChild($currentRoutesContent->importNode($routerDomElement, true));
+            } else {
+                $node = $currentRoutesContent->importNode($routerDomElement, true);
+                $currentRoutesContent->documentElement->appendChild($node);
+            }
         } else {
-            $node = $currentRoutesContent->importNode($routerDomElement, true);
-            $currentRoutesContent->documentElement->appendChild($node);
+            $this->output->writeln(__(self::MESSAGE_FILE_FILLED_WITH_THE_CONTENT_NONE, $file));
+            return;
         }
 
         $currentRoutesContent->preserveWhiteSpace = false;
@@ -383,7 +396,6 @@ abstract class AbstractModuleCommand extends Command
 
             foreach ($reflectionClass->getMethod($method)->getParameters() as $param) {
                 $methodData['params'][] = [
-                    'type' => $param->getType()->getName(),
                     'name' => $param->getName()
                 ];
             }
@@ -554,7 +566,7 @@ abstract class AbstractModuleCommand extends Command
             $fileCreated = $this->createFile($filePath, $isCodeDir);
 
             if (!$fileCreated) {
-                $this->output->writeln('<error>' . __(self::MESSAGE_FILE_EXIST, $filePath) . '</error>');
+                return;
             }
 
             if ($isCodeDir) {
@@ -571,7 +583,7 @@ abstract class AbstractModuleCommand extends Command
      * Creates class file with the content
      * @param string $file
      * @param string $namespace
-     * @param string $use
+     * @param array $imports
      * @param string $className
      * @param string $parent
      * @param string $implements
@@ -582,7 +594,7 @@ abstract class AbstractModuleCommand extends Command
     protected function createClass(
         $file,
         $namespace,
-        $use,
+        $imports,
         $className,
         $parent,
         $implements,
@@ -604,8 +616,8 @@ abstract class AbstractModuleCommand extends Command
                 self::FUNCTIONS_REPLACE
             ],
             [
-                $namespace,
-                "\n" . $use . "\n",
+                $namespace ? 'namespace ' . $namespace . ';' : '',
+                "\n" . implode("\n", $imports) . "\n",
                 $className,
                 $parent ? ' extends ' . $parent : '',
                 $implements ? ' implements ' . $implements : '',
@@ -664,7 +676,7 @@ abstract class AbstractModuleCommand extends Command
     {
         try {
             if ($this->file->fileExists($path)) {
-                $this->output->writeln('<error>' . __(self::MESSAGE_FILE_EXIST, $path) . '</error>');
+                $this->output->writeln(__(self::MESSAGE_FILE_EXIST, $path));
                 return false;
             } else {
                 if ($isCodeDir) {
@@ -719,18 +731,17 @@ abstract class AbstractModuleCommand extends Command
     protected function generateXml($filePath, $array, $isCodeDir = true, $indexedArrayItem = 'item')
     {
         try {
+            if ($isCodeDir) {
+                $filePath = self::CODE_DIRECTORY . $filePath;
+            }
+
             if (!$this->file->fileExists($filePath)) {
                 $this->createFile($filePath);
                 $this->xmlGenerator->setIndexedArrayItemName($indexedArrayItem);
                 $this->xmlGenerator->arrayToXml($array);
-
-                if ($isCodeDir) {
-                    $this->xmlGenerator->save(self::CODE_DIRECTORY . $filePath);
-                } else {
-                    $this->xmlGenerator->save($filePath);
-                }
+                $this->xmlGenerator->save($filePath);
             } else {
-                $this->output->writeln(self::MESSAGE_XML_EXIST);
+                $this->output->writeln(__(self::MESSAGE_XML_EXIST, $filePath));
             }
         } catch (DOMException $e) {
             $this->output->writeln('<error>' . $e->getMessage() . '</error>');
