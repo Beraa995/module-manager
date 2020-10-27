@@ -12,6 +12,8 @@
                 <item name="create-layout-handle" xsi:type="object">Mistlanto\ModuleManager\Console\Command\CreateLayoutHandleCommand</item>
                 <item name="create-route-full" xsi:type="object">Mistlanto\ModuleManager\Console\Command\CreateRouteFullCommand</item>
                 <item name="create-observer" xsi:type="object">Mistlanto\ModuleManager\Console\Command\CreateObserverCommand</item>
+                <item name="create-patch" xsi:type="object">Mistlanto\ModuleManager\Console\Command\CreatePatchCommand</item>
+                <item name="create-helper" xsi:type="object">Mistlanto\ModuleManager\Console\Command\CreateHelperCommand</item>
             </argument>
         </arguments>
     </type>

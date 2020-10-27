@@ -51,6 +51,7 @@ abstract class AbstractModuleCommand extends Command
     const FUNCTION_ARGUMENT_REPLACE = '{function_arguments}';
     const FUNCTION_BODY_REPLACE = '{function_body}';
     const PUBLIC_FUNCTION = 'public function';
+    const PUBLIC_STATIC_FUNCTION = 'public static function';
     const AREAS = [
         'frontend',
         'adminhtml'
@@ -373,12 +374,16 @@ abstract class AbstractModuleCommand extends Command
     /**
      * Returns property string for the class
      * @param string $propertyName
-     * @param string $propertyValue
+     * @param string|null $propertyValue
      * @return string
      */
-    protected function createPropertyString($propertyName, $propertyValue)
+    protected function createPropertyString($propertyName, $propertyValue = null)
     {
-        return $propertyName . ' = ' . $propertyValue . ';';
+        if ($propertyValue) {
+            return $propertyName . ' = ' . $propertyValue . ';';
+        }
+
+        return $propertyName . ';';
     }
 
     /**
@@ -602,6 +607,7 @@ abstract class AbstractModuleCommand extends Command
         $functions,
         $isCodeDir = false
     ) {
+        sort($imports);
         $controllerFileContent = $this->getFileContents(
             self::FILES_DIR_NAME . DIRECTORY_SEPARATOR . self::CLASS_FILE_NAME
         );
