@@ -1,0 +1,20 @@
+{
+    "name": "mistlanto/module-manager",
+    "description": "Code generation module",
+    "type": "magento2-module",
+    "license":"OSL-3.0",
+    "authors": [
+        {
+            "name": "Berin Kozlic",
+            "email": "beringgmu@gmail.com"
+        }
+    ],
+    "autoload": {
+        "files": [
+            "registration.php"
+        ],
+        "psr-4": {
+            "Mistlanto\\ModuleManager\\": ""
+        }
+    }
+}
