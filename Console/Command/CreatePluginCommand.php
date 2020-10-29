@@ -1,5 +1,5 @@
 <?php
-namespace Mistlanto\ModuleManager\Console\Command;
+namespace BKozlic\ModuleManager\Console\Command;
 
 use Exception;
 use Magento\Framework\App\Config\ScopeConfigInterface;
@@ -102,7 +102,7 @@ class CreatePluginCommand extends AbstractModuleCommand
      */
     protected function configure()
     {
-        $this->setName('mistlanto:plugin:create')
+        $this->setName('manager:plugin:create')
             ->setDescription('Creates a plugin');
 
         parent::configure();
@@ -164,7 +164,7 @@ class CreatePluginCommand extends AbstractModuleCommand
 
         if (!$input->getOption(self::PLUGIN_CLASS)) {
             $question = new Question(
-                '<question>Plugin class in Plugin folder: (example: Mistlanto/PluginClass)</question> '
+                '<question>Plugin class in Plugin folder: (example: BKozlic/PluginClass)</question> '
             );
 
             $input->setOption(

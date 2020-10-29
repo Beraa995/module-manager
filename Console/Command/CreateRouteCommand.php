@@ -1,5 +1,5 @@
 <?php
-namespace Mistlanto\ModuleManager\Console\Command;
+namespace BKozlic\ModuleManager\Console\Command;
 
 use DOMException;
 use Exception;
@@ -109,7 +109,7 @@ class CreateRouteCommand extends AbstractModuleCommand
      */
     protected function configure()
     {
-        $this->setName('mistlanto:route:create')
+        $this->setName('manager:route:create')
             ->setDescription('Creates a route in routes.xml');
 
         parent::configure();

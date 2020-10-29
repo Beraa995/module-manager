@@ -1,5 +1,5 @@
 <?php
-namespace Mistlanto\ModuleManager\Console\Command;
+namespace BKozlic\ModuleManager\Console\Command;
 
 use Exception;
 use Magento\Framework\App\Config\ScopeConfigInterface;
@@ -99,7 +99,7 @@ class CreateObserverCommand extends AbstractModuleCommand
      */
     protected function configure()
     {
-        $this->setName('mistlanto:observer:create')
+        $this->setName('manager:observer:create')
             ->setDescription('Creates an observer');
 
         parent::configure();
@@ -173,7 +173,7 @@ class CreateObserverCommand extends AbstractModuleCommand
 
         if (!$input->getOption(self::OBSERVER_INSTANCE)) {
             $question = new Question(
-                '<question>Observer class in Observer folder: Example(Mistlanto/CustomObserver)</question>'
+                '<question>Observer class in Observer folder: Example(BKozlic/CustomObserver)</question>'
             );
 
             $input->setOption(

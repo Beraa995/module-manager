@@ -1,5 +1,5 @@
 {
-    "name": "mistlanto/module-manager",
+    "name": "bkozlic/module-manager",
     "description": "Code generation module",
     "type": "magento2-module",
     "license":"OSL-3.0",
@@ -14,7 +14,7 @@
             "registration.php"
         ],
         "psr-4": {
-            "Mistlanto\\ModuleManager\\": ""
+            "BKozlic\\ModuleManager\\": ""
         }
     }
 }

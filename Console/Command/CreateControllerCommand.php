@@ -1,5 +1,5 @@
 <?php
-namespace Mistlanto\ModuleManager\Console\Command;
+namespace BKozlic\ModuleManager\Console\Command;
 
 use Symfony\Component\Console\Helper\QuestionHelper;
 use Symfony\Component\Console\Input\InputInterface;
@@ -64,7 +64,7 @@ class CreateControllerCommand extends AbstractModuleCommand
      */
     protected function configure()
     {
-        $this->setName('mistlanto:controller:create')
+        $this->setName('manager:controller:create')
             ->setDescription('Creates the controller class');
 
         parent::configure();

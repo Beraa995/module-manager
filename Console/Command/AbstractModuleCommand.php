@@ -1,5 +1,5 @@
 <?php
-namespace Mistlanto\ModuleManager\Console\Command;
+namespace BKozlic\ModuleManager\Console\Command;
 
 use DOMException;
 use Magento\Framework\App\Config\ScopeConfigInterface;
@@ -27,14 +27,14 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Question\Question;
 
 /**
- * Mistlanto abstract command class.
+ * ModuleManager's abstract command class.
  */
 abstract class AbstractModuleCommand extends Command
 {
     const XML_PATH_SECURE_BASE_LINK_URL = 'web/secure/base_link_url';
     const XML_PATH_UNSECURE_BASE_LINK_URL = 'web/unsecure/base_link_url';
     const CODE_DIRECTORY = BP . DIRECTORY_SEPARATOR . 'app' . DIRECTORY_SEPARATOR . 'code' . DIRECTORY_SEPARATOR;
-    const MODULE_NAME = 'Mistlanto_ModuleManager';
+    const MODULE_NAME = 'BKozlic_ModuleManager';
     const CLASS_FILE_NAME = 'classBase';
     const FUNCTION_FILE_NAME = 'functionBase';
     const FILES_DIR_NAME = 'Files';

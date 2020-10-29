@@ -1,5 +1,5 @@
 <?php
-namespace Mistlanto\ModuleManager\Console\Command;
+namespace BKozlic\ModuleManager\Console\Command;
 
 use Symfony\Component\Console\Helper\QuestionHelper;
 use Symfony\Component\Console\Input\InputInterface;
@@ -34,7 +34,7 @@ class CreatePatchCommand extends AbstractModuleCommand
      */
     protected function configure()
     {
-        $this->setName('mistlanto:patch:create')
+        $this->setName('manager:patch:create')
             ->setDescription('Creates a patch');
 
         parent::configure();

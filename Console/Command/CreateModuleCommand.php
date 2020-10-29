@@ -1,5 +1,5 @@
 <?php
-namespace Mistlanto\ModuleManager\Console\Command;
+namespace BKozlic\ModuleManager\Console\Command;
 
 use Symfony\Component\Console\Helper\QuestionHelper;
 use Symfony\Component\Console\Input\InputInterface;
@@ -42,7 +42,7 @@ class CreateModuleCommand extends AbstractModuleCommand
      */
     protected function configure()
     {
-        $this->setName('mistlanto:module:create')
+        $this->setName('manager:module:create')
             ->setDescription('Creates a module with required files');
 
         parent::configure();
@@ -142,7 +142,6 @@ class CreateModuleCommand extends AbstractModuleCommand
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        //@TODO Create composer.json file
         $moduleInput = $input->getOption(self::MODULE_OPTION_NAME);
         $dependencies = $input->getOption(self::MODULE_DEPENDENCY_NAME);
 

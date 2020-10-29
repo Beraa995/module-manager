@@ -1,5 +1,5 @@
 <?php
-namespace Mistlanto\ModuleManager\Console\Command;
+namespace BKozlic\ModuleManager\Console\Command;
 
 use Exception;
 use Magento\Framework\App\Config\ScopeConfigInterface;
@@ -103,7 +103,7 @@ class CreateConsoleCommand extends AbstractModuleCommand
      */
     protected function configure()
     {
-        $this->setName('mistlanto:command:create')
+        $this->setName('manager:command:create')
             ->setDescription('Creates a console command');
 
         parent::configure();
@@ -155,7 +155,7 @@ class CreateConsoleCommand extends AbstractModuleCommand
         }
 
         if (!$input->getOption(self::COMMAND_EXECUTE_NAME)) {
-            $question = new Question('<question>Command name for CLI: (Example: mistlanto:create)</question> ');
+            $question = new Question('<question>Command name for CLI: (Example: manager:create)</question> ');
 
             $input->setOption(
                 self::COMMAND_EXECUTE_NAME,

@@ -1,5 +1,5 @@
 <?php
-namespace Mistlanto\ModuleManager\Console\Command;
+namespace BKozlic\ModuleManager\Console\Command;
 
 use Symfony\Component\Console\Helper\QuestionHelper;
 use Symfony\Component\Console\Input\InputInterface;
@@ -38,7 +38,7 @@ class CreateModelsCommand extends AbstractModuleCommand
      */
     protected function configure()
     {
-        $this->setName('mistlanto:crud:create')
+        $this->setName('manager:crud:create')
             ->setDescription('Creates a CRUD models.');
 
         parent::configure();

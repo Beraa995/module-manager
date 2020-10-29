@@ -1,5 +1,5 @@
 <?php
-namespace Mistlanto\ModuleManager\Console\Command;
+namespace BKozlic\ModuleManager\Console\Command;
 
 use Exception;
 use Magento\Framework\App\Config\ScopeConfigInterface;
@@ -115,7 +115,7 @@ class CreateRouteFullCommand extends AbstractModuleCommand
      */
     protected function configure()
     {
-        $this->setName('mistlanto:route-full:create')
+        $this->setName('manager:route-full:create')
             ->setDescription('Creates a set of controller, route and page layout handle');
 
         parent::configure();

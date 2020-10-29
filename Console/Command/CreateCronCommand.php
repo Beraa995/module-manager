@@ -1,5 +1,5 @@
 <?php
-namespace Mistlanto\ModuleManager\Console\Command;
+namespace BKozlic\ModuleManager\Console\Command;
 
 use Exception;
 use Magento\Framework\App\Config\ScopeConfigInterface;
@@ -101,7 +101,7 @@ class CreateCronCommand extends AbstractModuleCommand
      */
     protected function configure()
     {
-        $this->setName('mistlanto:cron:create')
+        $this->setName('manager:cron:create')
             ->setDescription('Creates a cronjob');
 
         parent::configure();
@@ -174,7 +174,7 @@ class CreateCronCommand extends AbstractModuleCommand
         }
 
         if (!$input->getOption(self::CRON_INSTANCE)) {
-            $question = new Question('<question>Cron class in Cron folder: (example: Mistlanto/CronClass)</question> ');
+            $question = new Question('<question>Cron class in Cron folder: (example: BKozlic/CronClass)</question> ');
 
             $input->setOption(
                 self::CRON_INSTANCE,

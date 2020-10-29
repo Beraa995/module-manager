@@ -1,5 +1,5 @@
 <?php
-namespace Mistlanto\ModuleManager\Console\Command;
+namespace BKozlic\ModuleManager\Console\Command;
 
 use DOMException;
 use Symfony\Component\Console\Helper\QuestionHelper;
@@ -30,7 +30,7 @@ class CreateLayoutHandleCommand extends AbstractModuleCommand
      */
     protected function configure()
     {
-        $this->setName('mistlanto:handle:create')
+        $this->setName('manager:handle:create')
             ->setDescription('Creates a page layout handle');
 
         parent::configure();

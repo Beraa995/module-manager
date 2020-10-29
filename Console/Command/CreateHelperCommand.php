@@ -1,5 +1,5 @@
 <?php
-namespace Mistlanto\ModuleManager\Console\Command;
+namespace BKozlic\ModuleManager\Console\Command;
 
 use Symfony\Component\Console\Helper\QuestionHelper;
 use Symfony\Component\Console\Input\InputInterface;
@@ -27,7 +27,7 @@ class CreateHelperCommand extends AbstractModuleCommand
      */
     protected function configure()
     {
-        $this->setName('mistlanto:helper:create')
+        $this->setName('manager:helper:create')
             ->setDescription('Creates a helper');
 
         parent::configure();

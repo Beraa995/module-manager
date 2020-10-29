@@ -1,5 +1,5 @@
 <?php
-namespace Mistlanto\ModuleManager\Console\Command;
+namespace BKozlic\ModuleManager\Console\Command;
 
 use DOMException;
 use Symfony\Component\Console\Helper\QuestionHelper;
@@ -33,7 +33,7 @@ class CreateConfigurationFileCommand extends AbstractModuleCommand
      */
     protected function configure()
     {
-        $this->setName('mistlanto:configuration:create')
+        $this->setName('manager:configuration:create')
             ->setDescription('Creates configuration file in etc folder');
 
         parent::configure();
