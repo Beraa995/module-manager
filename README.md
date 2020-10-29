@@ -1,7 +1,7 @@
 # Module Manager for Magento 2
 This module is a set of console commands that provide functions for easy code generation.
 
-##Installation
+## Installation
 
 ```composer require bkozlic/bkozlic/module-manager```
 
@@ -9,45 +9,45 @@ This module is a set of console commands that provide functions for easy code ge
 
 ```php bin/magento setup:di:compile```
 
-##Usage
+## Usage
 
-#####Create a module:
+##### Create a module:
 ```php bin/magento manager:module:create```
 
-#####Create a configuration file in the etc folder:
+##### Create a configuration file in the etc folder:
 ```php bin/magento manager:configuration:create```
 
-#####Create a console command:
+##### Create a console command:
 ```php bin/magento manager:command:create```
 
-#####Create a controller:
+##### Create a controller:
 ```php bin/magento manager:controller:create```
 
-#####Create a cron job:
+##### Create a cron job:
 ```php bin/magento manager:cron:create```
 
-#####Create a helper:
+##### Create a helper:
 ```php bin/magento manager:helper:create```
 
-#####Create a handle layout xml:
+##### Create a handle layout xml:
 ```php bin/magento manager:handle:create```
 
-#####Create a set of model, resource model and collection:
+##### Create a set of model, resource model and collection:
 ```php bin/magento manager:crud:create```
 
-#####Create an observer:
+##### Create an observer:
 ```php bin/magento manager:observer:create```
 
-#####Create a patch:
+##### Create a patch:
 ```php bin/magento manager:patch:create```
 
-#####Create a plugin:
+##### Create a plugin:
 ```php bin/magento manager:plugin:create```
 
-#####Create a route:
+##### Create a route:
 ```php bin/magento manager:route:create```
 
-#####Create a set of controller, route and handle layout xml
+##### Create a set of controller, route and handle layout xml
 ```php bin/magento manager:route-full:create```
 
 ## Prerequisites
