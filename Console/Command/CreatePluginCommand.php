@@ -163,7 +163,9 @@ class CreatePluginCommand extends AbstractModuleCommand
         $questionHelper = $this->getHelper('question');
 
         if (!$input->getOption(self::PLUGIN_CLASS)) {
-            $question = new Question('<question>Plugin class in Plugin folder: (example: Mistlanto/PluginClass)</question> ');
+            $question = new Question(
+                '<question>Plugin class in Plugin folder: (example: Mistlanto/PluginClass)</question> '
+            );
 
             $input->setOption(
                 self::PLUGIN_CLASS,
@@ -269,10 +271,8 @@ class CreatePluginCommand extends AbstractModuleCommand
             return;
         }
 
-        $pluginClass = trim(str_replace('\\', '/', $pluginClass), '/');
         $targetClass = str_replace('/', '\\', $targetClass);
-        $moduleDirInCode = $this->getModuleDirInCode($this->getModuleDir('Plugin', $moduleInput));
-        $pluginClass = $moduleDirInCode . DIRECTORY_SEPARATOR . $pluginClass;
+        $pluginClass = $this->getInstanceByModuleFolder($moduleInput, 'Plugin', $pluginClass);
 
         $this->createPluginInXml($moduleInput, $pluginClass, $targetClass, $pluginName, $pluginSort, $pluginDisabled);
         $this->createPluginClass($pluginClass, $targetClass, $targetMethod, $methodData);

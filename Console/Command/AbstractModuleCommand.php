@@ -278,62 +278,57 @@ abstract class AbstractModuleCommand extends Command
         }
 
         // Current xml content
-        $currentRoutesContent = $this->xmlParser->load($file)->getDom();
-        $childNodes = $currentRoutesContent->childNodes->item(0)->childNodes;
+        $currentXMLContent = $this->xmlParser->load($file)->getDom();
+        $childNodes = $currentXMLContent->childNodes->item(0)->childNodes;
         $destinationNode = null;
         // XML created from the $content array
         $newDom = $this->xmlGenerator->arrayToXml($content)->getDom();
-        $routerDomElement = $newDom->getElementsByTagName($firstNode[0])->item(0);
+        $newXMLContent = $newDom->getElementsByTagName($firstNode[0])->item(0);
 
-        $hasNodes = true;
-        $tagName = '';
+        $equalNodes = true;
+        $foundEqualNode = false;
 
-        while ($hasNodes) {
+        while ($equalNodes) {
             foreach ($childNodes as $node) {
                 if ($node->nodeType === XML_TEXT_NODE) {
                     continue;
-                } else {
-                    $tagName = $node->tagName;
                 }
 
-                if ($this->compareNodes($node, $routerDomElement)) {
-                    $routerDomElement = $routerDomElement->firstChild;
+                if ($this->compareNodes($node, $newXMLContent)) {
+                    $newXMLContent = $newXMLContent->firstChild;
                     $destinationNode = $node;
-                } else {
-                    $childNodes = [];
+                    $foundEqualNode = $destinationNode->childNodes;
                 }
             }
 
-            $nextElements = $currentRoutesContent->getElementsByTagName($tagName)->item(0);
-
-            //@TODO Mention 7.2 in composer
-            if ($nextElements && $nextElements->childNodes->count()) {
-                $childNodes = $nextElements->childNodes;
+            if ($foundEqualNode) {
+                $childNodes = $foundEqualNode;
+                $foundEqualNode = false;
             } else {
-                $hasNodes = false;
+                $equalNodes = false;
             }
         }
 
-        if ($routerDomElement) {
+        if ($newXMLContent && $newXMLContent->nodeType !== XML_TEXT_NODE) {
             if ($destinationNode !== null) {
-                $destinationNode->appendChild($currentRoutesContent->importNode($routerDomElement, true));
+                $destinationNode->appendChild($currentXMLContent->importNode($newXMLContent, true));
             } else {
-                $node = $currentRoutesContent->importNode($routerDomElement, true);
-                $currentRoutesContent->documentElement->appendChild($node);
+                $node = $currentXMLContent->importNode($newXMLContent, true);
+                $currentXMLContent->documentElement->appendChild($node);
             }
         } else {
             $this->output->writeln(__(self::MESSAGE_FILE_FILLED_WITH_THE_CONTENT_NONE, $file));
             return;
         }
 
-        $currentRoutesContent->preserveWhiteSpace = false;
-        $currentRoutesContent->formatOutput = true;
+        $currentXMLContent->preserveWhiteSpace = false;
+        $currentXMLContent->formatOutput = true;
 
         // Formatting xml
-        $newXmlContent = $currentRoutesContent->saveXML();
-        $currentRoutesContent->loadXML($newXmlContent);
+        $newXmlContent = $currentXMLContent->saveXML();
+        $currentXMLContent->loadXML($newXmlContent);
 
-        if ($currentRoutesContent->save($file)) {
+        if ($currentXMLContent->save($file)) {
             $this->output->writeln(__(self::MESSAGE_FILE_FILLED_WITH_THE_CONTENT, $file));
         } else {
             $this->output->writeln(__(self::MESSAGE_FILE_FILLED_WITH_THE_CONTENT_ERROR, $file));
@@ -427,14 +422,14 @@ abstract class AbstractModuleCommand extends Command
         if ($firstNode->nodeName === $secondNode->nodeName) {
             foreach ($firstNode->attributes as $attribute) {
                 $firstNodeAttributes[] = [
-                    'name' => $attribute->name,
+                    'name' => $attribute->nodeName,
                     'value' => $attribute->value
                 ];
             }
 
             foreach ($secondNode->attributes as $attribute) {
                 $secondNodeAttributes[] = [
-                    'name' => $attribute->name,
+                    'name' => $attribute->nodeName,
                     'value' => $attribute->value
                 ];
             }
@@ -585,6 +580,21 @@ abstract class AbstractModuleCommand extends Command
     }
 
     /**
+     * Returns path in code directory
+     * @param string $module
+     * @param string $moduleFolder
+     * @param string $pathInFolder
+     * @return string
+     */
+    protected function getInstanceByModuleFolder($module, $moduleFolder, $pathInFolder)
+    {
+        $instance = trim(str_replace('\\', '/', $pathInFolder), '/');
+        $moduleDirInCode = $this->getModuleDirInCode($this->getModuleDir($moduleFolder, $module));
+
+        return $moduleDirInCode . DIRECTORY_SEPARATOR . $instance;
+    }
+
+    /**
      * Creates class file with the content
      * @param string $file
      * @param string $namespace
@@ -608,6 +618,10 @@ abstract class AbstractModuleCommand extends Command
         $isCodeDir = false
     ) {
         sort($imports);
+        $importsFormated = count($imports) ?
+            "\n" . implode("\n", $imports) . "\n" :
+            '';
+
         $controllerFileContent = $this->getFileContents(
             self::FILES_DIR_NAME . DIRECTORY_SEPARATOR . self::CLASS_FILE_NAME
         );
@@ -623,7 +637,7 @@ abstract class AbstractModuleCommand extends Command
             ],
             [
                 $namespace ? 'namespace ' . $namespace . ';' : '',
-                "\n" . implode("\n", $imports) . "\n",
+                $importsFormated,
                 $className,
                 $parent ? ' extends ' . $parent : '',
                 $implements ? ' implements ' . $implements : '',
@@ -681,16 +695,15 @@ abstract class AbstractModuleCommand extends Command
     protected function createFile($path, $isCodeDir = false)
     {
         try {
+            if ($isCodeDir) {
+                $path = self::CODE_DIRECTORY . $path;
+            }
+
             if ($this->file->fileExists($path)) {
                 $this->output->writeln(__(self::MESSAGE_FILE_EXIST, $path));
                 return false;
             } else {
-                if ($isCodeDir) {
-                    $this->directoryWriteFactory->touch(self::CODE_DIRECTORY . $path);
-                } else {
-                    $this->directoryWriteFactory->touch($path);
-                }
-
+                $this->directoryWriteFactory->touch($path);
                 $this->output->writeln(__(self::MESSAGE_FILE_CREATED, $path));
                 return true;
             }

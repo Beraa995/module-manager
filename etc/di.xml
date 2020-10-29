@@ -14,6 +14,8 @@
                 <item name="create-observer" xsi:type="object">Mistlanto\ModuleManager\Console\Command\CreateObserverCommand</item>
                 <item name="create-patch" xsi:type="object">Mistlanto\ModuleManager\Console\Command\CreatePatchCommand</item>
                 <item name="create-helper" xsi:type="object">Mistlanto\ModuleManager\Console\Command\CreateHelperCommand</item>
+                <item name="create-cron" xsi:type="object">Mistlanto\ModuleManager\Console\Command\CreateCronCommand</item>
+                <item name="create-console-command" xsi:type="object">Mistlanto\ModuleManager\Console\Command\CreateConsoleCommand</item>
             </argument>
         </arguments>
     </type>

@@ -173,10 +173,11 @@ class CreatePatchCommand extends AbstractModuleCommand
      */
     protected function createPatchClass($moduleInput, $patchName, $patchType, $patchRevertible)
     {
-        $moduleDirInCode = $this->getModuleDirInCode(
-            $this->getModuleDir('Setup/Patch/' . $this->firstUpper($patchType), $moduleInput)
+        $patchClass = $this->getInstanceByModuleFolder(
+            $moduleInput,
+            'Setup/Patch/' . $this->firstUpper($patchType),
+            $patchName
         );
-        $patchClass = $moduleDirInCode . DIRECTORY_SEPARATOR . $patchName;
         $constructData = $this->getDataForConstructMethod($patchType);
         $classSplit = $this->parseClassString($patchClass);
         $imports = $this->createPatchImports($patchType, $patchRevertible);

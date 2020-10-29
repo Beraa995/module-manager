@@ -239,9 +239,7 @@ class CreateObserverCommand extends AbstractModuleCommand
             return;
         }
 
-        $observerInstance = trim(str_replace('\\', '/', $observerInstance), '/');
-        $moduleDirInCode = $this->getModuleDirInCode($this->getModuleDir('Observer', $moduleInput));
-        $observerInstance = $moduleDirInCode . DIRECTORY_SEPARATOR . $observerInstance;
+        $observerInstance = $this->getInstanceByModuleFolder($moduleInput, 'Observer', $observerInstance);
 
         $this->createObserverInXml(
             $moduleInput,

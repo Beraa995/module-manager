@@ -98,17 +98,11 @@ class CreateHelperCommand extends AbstractModuleCommand
      */
     protected function createHelperClass($moduleInput, $helperClass)
     {
-        $moduleDirInCode = $this->getModuleDirInCode(
-            $this->getModuleDir('Helper', $moduleInput)
-        );
-        $helperClass = $moduleDirInCode . DIRECTORY_SEPARATOR . trim(
-            str_replace('\\', '/', $helperClass),
-            '/'
-        );
-        $classSplit = $this->parseClassString($helperClass);
+        $class = $this->getInstanceByModuleFolder($moduleInput, 'Helper', $helperClass);
+        $classSplit = $this->parseClassString($class);
 
         $this->createClass(
-            $helperClass . '.php',
+            $class . '.php',
             $classSplit['ns'] ?? '',
             ['use ' . self::ABSTRACT_HELPER_FULL . ';'],
             $classSplit['className'] ?? '',
