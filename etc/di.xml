@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+    <type name="Magento\Framework\Console\CommandListInterface">
+        <arguments>
+            <argument name="commands" xsi:type="array">
+                <item name="create-module" xsi:type="object">BKozlic\ModuleManager\Console\Command\CreateModuleCommand</item>
+                <item name="create-configuration-file" xsi:type="object">BKozlic\ModuleManager\Console\Command\CreateConfigurationFileCommand</item>
+                <item name="create-controller" xsi:type="object">BKozlic\ModuleManager\Console\Command\CreateControllerCommand</item>
+                <item name="create-route" xsi:type="object">BKozlic\ModuleManager\Console\Command\CreateRouteCommand</item>
+                <item name="create-plugin" xsi:type="object">BKozlic\ModuleManager\Console\Command\CreatePluginCommand</item>
+                <item name="create-crud" xsi:type="object">BKozlic\ModuleManager\Console\Command\CreateModelsCommand</item>
+                <item name="create-layout-handle" xsi:type="object">BKozlic\ModuleManager\Console\Command\CreateLayoutHandleCommand</item>
+                <item name="create-route-full" xsi:type="object">BKozlic\ModuleManager\Console\Command\CreateRouteFullCommand</item>
+                <item name="create-observer" xsi:type="object">BKozlic\ModuleManager\Console\Command\CreateObserverCommand</item>
+                <item name="create-patch" xsi:type="object">BKozlic\ModuleManager\Console\Command\CreatePatchCommand</item>
+                <item name="create-helper" xsi:type="object">BKozlic\ModuleManager\Console\Command\CreateHelperCommand</item>
+                <item name="create-cron" xsi:type="object">BKozlic\ModuleManager\Console\Command\CreateCronCommand</item>
+                <item name="create-console-command" xsi:type="object">BKozlic\ModuleManager\Console\Command\CreateConsoleCommand</item>
+            </argument>
+        </arguments>
+    </type>
+</config>

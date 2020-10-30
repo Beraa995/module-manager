@@ -1,0 +1,4 @@
+{access_modifier_function} {function_name}({function_arguments})
+{
+    {function_body}
+}
