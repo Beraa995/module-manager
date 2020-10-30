@@ -60,13 +60,13 @@ class CreateModelsCommand extends AbstractModuleCommand
                 self::MODEL_DATABASE_NAME,
                 null,
                 InputOption::VALUE_REQUIRED,
-                'Database name.'
+                'Table name.'
             ),
             new InputOption(
                 self::MODEL_DATABASE_PRIMARY_ID_COLUMN,
                 null,
                 InputOption::VALUE_REQUIRED,
-                'Database primary id.'
+                'Table primary id.'
             ),
             new InputOption(
                 self::MODEL_EXTENSIBLE,
@@ -102,7 +102,7 @@ class CreateModelsCommand extends AbstractModuleCommand
         }
 
         if (!$input->getOption(self::MODEL_DATABASE_NAME)) {
-            $question = new Question('<question>Database name for the resource model:</question> ', '');
+            $question = new Question('<question>DB Table name for the resource model:</question> ', '');
 
             $input->setOption(
                 self::MODEL_DATABASE_NAME,
@@ -111,7 +111,7 @@ class CreateModelsCommand extends AbstractModuleCommand
         }
 
         if (!$input->getOption(self::MODEL_DATABASE_PRIMARY_ID_COLUMN)) {
-            $question = new Question('<question>Database id field name:</question> ', '');
+            $question = new Question('<question>DB Table id field name:</question> ', '');
 
             $input->setOption(
                 self::MODEL_DATABASE_PRIMARY_ID_COLUMN,

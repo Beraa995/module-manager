@@ -313,7 +313,7 @@ class CreatePluginCommand extends AbstractModuleCommand
     protected function createPluginFunctions($targetClass, $targetMethod, $methodData)
     {
         $classSplit = $this->parseClassString($targetClass);
-        $subjectArgument = $classSplit['className'] . ' $subject, ';
+        $subjectArgument = $classSplit['className'] . ' $subject';
         $parameters = [];
         $functions = [];
 
@@ -321,24 +321,28 @@ class CreatePluginCommand extends AbstractModuleCommand
             $parameters[] = '$' . $param['name'];
         }
 
+        $additionalArguments = count($parameters) ?
+            ', ' . implode(', ', $parameters) :
+            '';
+
         $functions[]= $this->createFunctionString(
             self::PUBLIC_FUNCTION,
             'before' . $this->firstUpper($targetMethod),
-            $subjectArgument . implode(', ', $parameters),
+            $subjectArgument . $additionalArguments,
             'return [' . implode(', ', $parameters) . '];'
         );
 
         $functions[]= $this->createFunctionString(
             self::PUBLIC_FUNCTION,
             'around' . $this->firstUpper($targetMethod),
-            $subjectArgument . '\\Closure $proceed, ' . implode(', ', $parameters),
+            $subjectArgument . ', \\Closure $proceed' . $additionalArguments,
             'return $proceed();'
         );
 
         $functions[]= $this->createFunctionString(
             self::PUBLIC_FUNCTION,
             'after' . $this->firstUpper($targetMethod),
-            $subjectArgument . '$result, ' . implode(', ', $parameters),
+            $subjectArgument . ', $result' . $additionalArguments,
             'return $result;'
         );
 
